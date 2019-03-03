@@ -1,0 +1,486 @@
+集合和元素
+    :: 该方法被称为cons，意为构造，向队列的头部追加数据，创造新的列表。
+    元素::列表      或者     列表.::元素        只有这两种写法并且只能在头部插入新元素
+    scala> 3::res23
+    res24: List[Int] = List(3, 1, 2)
+    scala> res23.::(3)
+    res25: List[Int] = List(3, 1, 2)   两种写法等效
+    scala> res25::res26
+    res30: List[Any] = List(List(3, 1, 2), 1, 2, 4)   注意！
+    :+和+: 两者的区别在于:+方法用于在尾部追加元素，+:方法用于在头部追加元素；和::很类似，但是::可以用于pattern match ，而+:则不行. 关于+:和:+,只要记住冒号永远靠近集合类型就OK了。
+    scala> 1::2::Nil
+    res21: List[Int] = List(1, 2)
+    scala> Nil:+1:+2
+    res22: List[Int] = List(1, 2)
+    scala> 1+:Nil:+2        注意集合靠近:
+    res23: List[Int] = List(1, 2)
+集合和集合
+    ++ 该方法用于连接两个集合，list1++list2
+    ::: 该方法只能用于连接两个List类型的集合   与++作用效果相同
+    scala> res25:::res26
+    res28: List[Int] = List(3, 1, 2, 1, 2, 4)
+    scala> res25++res26
+    res29: List[Int] = List(3, 1, 2, 1, 2, 4)
+
+集合运算  与 或 非
+    交集：
+        scala> Set(1,2,3) & Set(2,4)   // &方法等同于interset方法
+        scala> Set(1,2,3) intersect Set(2,4)
+    并集：
+        scala> Set(1,2,3) ++ Set(2,4)
+        scala> Set(1,2,3) | Set(2,4)   // |方法等同于union方法
+        scala> Set(1,2,3) union Set(2,4)
+    差集：
+        scala> Set(1,2,3) -- Set(2,4) //得到 Set(1,3)
+        scala> Set(1,2,3) &~ Set(2,4) 
+        scala> Set(1,2,3) diff Set(2,4)
+    添加或删除元素，可以直接用+,-方法来操作，添加删除多个元素可以用元组来封装：
+        scala> Set(1,2,3) + (2,4)
+        scala> Set(1,2,3) - (2,4)
+    去重
+        对于非Set集合，在做交集、并集、差集时必须转换为Set，否则元素不去重没有意义。
+        而对于非Set类型集合元素去重，也有个很好的方法：distinct，定义在 GenSeqLike 特质中
+        这个方法的好处是集合在去重后类型不变，比用Set去重更简洁
+        scala> List(1,2,2,3).distinct
+        scala> List(1,2,2,3).toSet.toList 
+遍历
+    for
+        to
+            for (i <- 1 to 3) {   // Int类型的Range,包括区间上限
+            println(i)
+            }
+            //相当于
+            val range=(1 to 3) //range: scala.collection.immutable.Range.Inclusive = Range(1, 2, 3)
+            range.foreach(println)
+        until
+            for (i <- 1 until 3) {    // Int类型的Range,不包括区间上限
+            println("i: " + i)
+            }
+            //i: 1
+            //i: 2
+
+        多范围
+            for( i <- 1 to 3; j <- 1 to 3){
+                //...
+            }
+            //相当于
+            for( i <- 1 to 3){
+            for( j <- 1 to 3){
+                //...
+            }
+            }
+
+        List
+            val list=List(1,2,3) //  list: List[Int] = List(1, 2, 3)
+            for (elem <- list) {    //增强for循环
+            println(elem)
+            }
+            // 1
+            // 2
+            // 3
+            //在遍历中更细粒度控制遍历，scala提供了保护式(Guard)
+            for (name <- names
+                if name.startsWith("K")    //以K开头
+                if name.endsWith("t")      //以t结尾
+            ) {
+                println(name)
+            }
+        for循环中并未提供 break、continue这种形式的控制语句。那么scala中的循环是通过什么实现循环控制呢？
+            val names = Seq("Kitty", "Tom", "Luke", "Kit")
+            println("----------------------")
+            names.takeWhile(!_.startsWith("L")).foreach(println)    //返回一个迭代器，指代从it开始到第一个不满足条件p的元素为止的片段。
+            //执行结果    从头开始到第一个不满足条件截止
+            //Kitty
+            //Tom
+            println("----------------------")
+            names.dropWhile(_.startsWith("K")).foreach(println)     //返回一个新的迭代器，指向it所指元素中第一个不满足条件p的元素开始直至终点的所有元素。
+            //执行结果    从第一个不满足条件开始到结尾
+            //Tom
+            //Luke
+            //Kit
+            或者一下解决方案 
+            import scala.util.control.Breaks
+            val outer = new Breaks
+            val inner = new Breaks
+            outer.breakable(
+                for (data <- splitedData) {
+                    inner.breakable(
+                        for (pf <- pfs) {
+                            if (pf.trim == data) {
+                                flag = true
+                                outer.break()
+                            }
+                        }
+                    )
+                }
+            )
+        for推导式
+            如果for循环的循环体以yield开始，则该循环会构造出一个集合，每次迭代生成一个集合中的值。
+            for推导式生成的集合类型与它的第一个生成器的类型兼容。
+            val res =
+                for(c <- "yong"; i <- 0 to 1)
+                    yield (c + i).toChar
+            println(res)
+            输出：yzopnogh
+    map
+        遍历:
+            遍历所有的key 和value  格式for((k,v)<-x){....}   *******
+            单独遍历所有的key  格式for((key,_)<-x){....}     *******
+            单独遍历所有的value   格式for((_,value)<-x){....}    ******
+            for(key <- hashmap.keys) println(map.get(key).get)
+            map.foreach(case (key,value) => println(key))  ********
+
+        函数:
+            map+=(k,v)
+            map-=(k)
+            map1++map2
+            map.get("key").get
+            map.isEmpty
+            map.last
+            map.max
+            map.min
+            map.size
+            map.contains("key")   检查是否包含某个key
+            map.count(functin)    统计满足条件的数量
+            map.exists(funtiion)  检查是否有满足条件的k v
+            map.empty   返回一个空map 类型与原来相同
+            map.filter(function)  将true的进行过滤
+    模式匹配:
+        值匹配  类型匹配  参数提取
+        值匹配:(效果等同于switch)
+            for (ch <- "+-3!") {
+                var sign = 0
+                var digit = 0           
+                ch match {
+                    case '+' => sign = 1
+                    case '-' => sign = -1
+                    case _ if ch.toString.equals("3") => digit = 3
+                    case _ => sign = 0
+                }
+                println(ch + " " + sign + " " + digit)
+            }
+            值匹配 变量也可以放在case后
+            val str = "+-3!"
+            for (i <- str.indices) {
+            var sign = 0
+            var digit = 0
+            str(i) match {
+                case '+' => sign = 1
+                case '-' => sign = -1
+                case ch if Character.isDigit(ch) => digit = Character.digit(ch, 10)
+                case _ =>
+            }
+            println(str(i) + " " + sign + " " + digit)
+        类型匹配:（可避免使用isinstanceof()和asinstanceof[]）
+            val a = 8
+            val obj = if(a == 1) 1
+            else if(a == 2) "2"
+            else if(a == 3) BigInt(3)
+            else if(a == 4) Map("aa" -> 1)
+            else if(a == 5) Map(1 -> "aa")
+            else if(a == 6) Array(1, 2, 3)
+            else if(a == 7) Array("aa", 1)
+            else if(a == 8) Array("aa")
+            val r1 = obj match {
+                case x: Int => x
+                case s: String => s.toInt
+                case BigInt => -1 //不能这么匹配
+                case _: BigInt => Int.MaxValue
+                case m: Map[String, Int] => "Map[String, Int]类型的Map集合"
+                case m: Map[_, _] => "Map集合"
+                case a: Array[Int] => "It's an Array[Int]"
+                case a: Array[String] => "It's an Array[String]"
+                case a: Array[_] => "It's an array of something other than Int"
+                case _ => 0
+            }
+            println(r1 + ", " + r1.getClass.getName)
+            Map类型的泛型在匹配的时候，会自动删除泛型类型，只会匹配到Map类型，而不会精确到Map里面的泛型类型
+        参数提取:
+            匹配数组:
+                for (arr <- Array(Array(0), Array(1, 0), Array(0, 1, 0), Array(1, 1, 0), Array(1, 1, 0, 1))) {
+                val result = arr match {
+                    case Array(0) => "0"
+                    case Array(x, y) => x + " " + y
+                    case Array(x, y, z) => x + " " + y + " " + z
+                    case Array(0, _*) => "0..."
+                    case _ => "something else"
+                }
+                println(result)}
+            匹配列表:
+                for (lst <- Array(List(0), List(1, 0), List(0, 0, 0), List(1, 0, 0))) {
+                val result = lst match {
+                    case 0 :: Nil => "0"
+                    case x :: y :: Nil => x + " " + y
+                    case 0 :: tail => "0 ..."
+                    case _ => "something else"
+                }
+                println(result)
+                }
+            匹配元组:
+                for (pair <- Array((0, 1), (1, 0), (1, 1))) {
+                val result = pair match {
+                    case (0, _) => "0 ..."
+                    case (y, 0) => y + " 0"
+                    case _ => "neither is 0"
+                }
+                println(result)
+                }
+            
+    排序: sorted   sortby(function)   sortwith(function)
+    1）sorted   对一个集合进行自然排序，通过传递隐式的Ordering  适合单集合的升降序   要排序的集合中的元素要实现ordering trait（可通过隐式转换实现）
+    2）sortBy   对一个属性或多个属性进行排序，通过它的类型。代码量比较少，推荐使用这种
+    3）sortWith 基于函数的排序，通过一个comparator函数，实现自定义排序的逻辑。适合定制化场景比较高的排序规则，比较灵活，也能支持单个或多个属性的排序，但代码量稍多，内部实际是通过java里面的Comparator接口来完成排序的。
+    例1.基于单集合单字段的排序
+        val xs=Seq(1,5,3,4,6,2)
+        println("==============sorted排序=================")
+        println(xs.sorted) //升序
+        println(xs.sorted.reverse) //降序
+        println("==============sortBy排序=================")
+        println( xs.sortBy(d=>d) ) //升序
+        println( xs.sortBy(d=>d).reverse ) //降序
+        println("==============sortWith排序=================")
+        println( xs.sortWith(_<_) )//升序
+        println( xs.sortWith(_>_) )//降序
+        结果：
+        ==============sorted排序=================
+        List(1, 2, 3, 4, 5, 6)
+        List(6, 5, 4, 3, 2, 1)
+        ==============sortBy排序=================
+        List(1, 2, 3, 4, 5, 6)
+        List(6, 5, 4, 3, 2, 1)
+        ==============sortWith排序=================
+        List(1, 2, 3, 4, 5, 6)
+        List(6, 5, 4, 3, 2, 1)
+    例2.基于元组多字段的排序      注意多字段的排序，使用sorted比较麻烦，这里给出使用sortBy和sortWith的例子
+        val pairs = Array(
+                        ("a", 5, 1),
+                        ("c", 3, 1),
+                        ("b", 1, 3)
+                        )
+        先看基于sortBy的实现：       
+            //按第三个字段升序，第一个字段降序，注意，排序的字段必须和后面的tuple对应
+            val bx= pairs.
+            sortBy(r => (r._3, r._1))( Ordering.Tuple2(Ordering.Int, Ordering.String.reverse) )
+            //打印结果        
+            bx.map( println )        
+        再看基于sortWith的实现：
+            val b= pairs.sortWith{
+                case (a,b)=>{
+                    if(a._3==b._3) {//如果第三个字段相等，就按第一个字段降序
+                        a._1>b._1
+                    }else{
+                        a._3<b._3 //否则第三个字段降序
+                    }
+                }
+            }
+            //打印结果
+            b.map(println)
+        结果：
+                (c,3,1)
+                (a,5,1)
+                (b,1,3)
+    例3.基于类的排序
+        先看sortBy的实现方法 排序规则：先按年龄排序，如果一样，就按照名称降序排
+        case class Person(val name:String,val age:Int)        
+            val p1=Person("cat",23)
+            val p2=Person("dog",23)
+            val p3=Person("andy",25)
+            val pairs = Array(p1,p2,p3)
+        先看基于sortBy的实现：       
+        //先按年龄排序，如果一样，就按照名称降序排
+        val bx= pairs.sortBy(person => (person.age, person.name))( Ordering.Tuple2(Ordering.Int, Ordering.String.reverse) )        
+            bx.map(println)
+        再看sortWith的实现方法：       
+            val b=pairs.sortWith{
+                case (person1,person2)=>{
+                    person1.age==person2.age match {
+                        case true=> person1.name>person2.name //年龄一样，按名字降序排
+                        case false=>person1.age<person2.age //否则按年龄升序排
+                    }
+                }
+            }
+            b.map(println)
+        结果：
+        Person(dog,23)
+        Person(cat,23)
+        Person(andy,25)
+    例4. sorted案例
+        case class Person(name: String, age: Int) {
+            override def toString = {
+                "name: " + name + ", age: " + age
+            }
+            override def equals(other:Any)={
+                val that = other.asInstanceOf[Person]
+                if(that==null)false
+                else name == that.name&&age==that.age
+            }
+            override def hashCode=name.hashCode()*5+age.hashCode()*9
+        }
+        val p1 = new Person("rain", 24)
+        val p2 = new Person("rain", 22)
+        val p3 = new Person("Lily", 15)
+        val list = List(p1, p2, p3)        
+        方案1.    
+        implicit object Person2Ordering extends Ordering[Person] {
+                override def compare(p1: Person, p2: Person): Int = {
+                    p1.name == p2.name match {
+                        case false => -p1.name.compareTo(p2.name)
+                        case _ => p1.age - p2.age
+                    }
+                }
+            }
+        方案2.
+        class Person(name:String,age:Int) extends Ordered[Person] with Serializable{
+            override def compare(that: Person): Int = {
+                if(this.name == that.name){
+                    this.age - that.age
+                }else{
+                    that.name - this.name
+                }
+            }
+        }
+        list.sorted
+
+    topN: 
+        scala:  take()   takeright()     reverse()          先排序后再take
+        spark:  take()   top()默认降序    takeordered() 默认升序
+    隐式转换: 隐式转换最常用的用途就是扩展已有的类，在不修改原有类的基础上为其添加新的方法、成员。
+        1.隐式转换函数      ***************
+            对于隐式转换函数，编译器最关心的是它的类型签名，即它将哪一种类型转换到另一种类型，也就是说它应该接受只一个参数，对于接受多参数的隐式函数来说就没有隐式转换的功能了
+            implicit def int2str(x:Int):String = x.toString
+        2.隐式类（隐式转换类和隐式转换函数作用一致）        **************
+            implicit class Box(x: Int) {    
+            }
+            隐式类就是在类定义前加一个implicit关键字，这表示它的构造函数是一个隐式转换函数，能够将参数的类型转换成自己的类型，在这里就是构造函数SayhiImpl(ivalue:Int)定义了Int到SayhiImpl的隐式转换。
+            1.只能在别的trait/类/对象内部定义。2.构造函数只能携带一个非隐式参数。
+            class SayhiImpl(ivalue:Int) {
+                val value:Int = ivalue
+                def sayhi = println(s"Hi $value!")
+            }
+            implicit def int2Sayhi(x:Int) = new SayhiImpl(x)
+            =================================>
+            implicit class SayhiImpl(ivalue:Int) {
+                val value:Int = ivalue
+                def sayhi = println(s"Hi $value!")
+            }
+            123.sayhi  //合法
+
+        3.隐式参数（隐式参数需要和隐式值配合使用）
+            def compare[T](x:T,y:T)(implicit ordered: Ordering[T]):Int = {
+                ordered.compare(x,y)
+            }
+        4.隐式值    ******************
+            implicit val x: Int = 0
+        5.隐式对象
+            implicit object obj {
+            }
+            implicit object Obj {
+                def hello(s:String) = println(s"Hello $s!")
+            }
+            def test2(s:String)(implicit o: Obj.type ) = {
+                o.hello(s)
+            }
+            test2("world")
+
+        6.context bound         ******************
+            def compare2[T: Ordering](x: T, y: T) = {
+                val ord = implicitly[Ordering[T]]
+                ord.compare(x, y)
+            }
+            等价于:
+            def compare2[T](x: T, y: T)(implicit ord:Ordering[T]) = {
+                ord.compare(x, y)
+            }
+    trait混入:
+        类功能增强:
+            trait Friend{
+                val name : String
+                def accompany() = println("Your friend " + name + " accompanies  you")
+            }
+            class Dog(val name : String)
+            val bob  = new Dog("Bob") with Friend
+            bob.accompany()
+        责任链模式:
+            trait A  A中被使用的方法不要是抽象的
+            trait B extends A
+            trait C extends A
+            class D extends A   //D中的成员方法使用到了A的方法  ******* 关键的一步。 
+            new D with B with C
+        例:    
+            trait LineHandler {
+                def handle(line: String):Any = {}
+            }　
+            trait FileAbility extends LineHandler {
+                def readFile(filename:String): String = {
+                    val fileSource =  Source.fromFile(filename)
+                    try {
+                    return fileSource.mkString
+                    } finally {
+                    fileSource.close()
+                    }
+                }
+                def readFileLines(filename:String):List[String] = {
+                    val fileSource =  Source.fromFile(filename)
+                    try {
+                    return fileSource.getLines().toList
+                    } finally {
+                    fileSource.close()
+                    }
+                }
+                def handleFile(filename:String):List[Any] = {
+                    return readFileLines(filename).map(handle(_)).toList      ***************
+                }
+
+                def handleFileWithNoReturn(filename:String, lineHandler: LineHandler):Unit = {
+                    readFileLines(filename).foreach { line =>
+                    lineHandler.handle(line)
+                    }
+                }
+            }
+            object ScalaTraitDemo extends App {
+
+                launch()
+
+                def launch(): Unit = {
+                    handleFile("/etc/passwd")
+                }
+
+                def handleFile(filename:String):Unit = {
+
+                    trait LinePrintHandler extends LineHandler {
+                    override def handle(line: String): Any = {
+                        println(line)
+                    }
+                    }
+
+                    val fileAbility = new FileAbility with LinePrintHandler    //普通的trait混入
+                    fileAbility.handleFile(filename)
+
+                    trait LineSplitterHandler extends LineHandler {
+                        override def handle(line: String): Any = {
+                            return super.handle(line.split(":").mkString("(", ",", ")"))    //重要一步 注意参数的返回类型
+                        }
+                    }
+
+                    trait LineNumberHandler extends LineHandler {
+                        var id = 0
+                        override def handle(line:String): Any = {       //注意此处参数与下一个trait的输出类型一致
+                            id += 1
+                            //println("number: " + line);
+                            return id + ": " + line
+                        }
+                    }
+
+                    val fileAbility2 = new FileAbility with LineNumberHandler with LineSplitterHandler   //链式混入  本质上是一个递归调用
+                    val result = fileAbility2.handleFile(filename)
+                    result.foreach { ref =>
+                    ref match {
+                        case s:String => println(s)
+                        case a:Array[Any] =>  for(e <- ref.asInstanceOf[Array[Any]]) {println(e)}
+                        case a:List[Any] =>  for(e <- ref.asInstanceOf[List[Any]]) {println(e)}
+                        case _ => println(ref)
+                    }
+                    }
+                }
+            }
+

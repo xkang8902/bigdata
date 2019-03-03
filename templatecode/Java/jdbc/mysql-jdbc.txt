@@ -1,0 +1,316 @@
+db.properties
+    driver=com.mysql.jdbc.Driver
+    url=jdbc:mysql://localhost:3306/web08?useUnicode=true&characterEncoding=utf8
+    username=root
+    password=12345
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Properties;
+import java.util.ResourceBundle;
+
+/** 
+ * 提供获取连接和释放资源的方法
+ * @author Administrator
+ *
+ */
+public class JDBCUtils {
+    private static String driver;         //驱动
+    private static String url;            //路径
+    private static String username;       //用户名
+    private static String password;       //密码
+
+    /*
+        * 静态代码块加载配置文件信息
+        */        
+    static{
+        try {
+            //1.通过当前类获得类加载器
+            ClassLoader classLoader=JDBCUtils.class.getClassLoader();
+            //2.通过类加载器的方法获得一个输入流
+            InputStream is=classLoader.getResourceAsStream("db.properties");
+            //3.创建一个properties对象
+            Properties props=new Properties();
+            //4.加载输入流    
+            props.load(is);
+            //5.获取相关参数的值
+            driver=props.getProperty("driver");
+            url=props.getProperty("url");
+            username=props.getProperty("username");
+            password=props.getProperty("password");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    } 
+    /*
+        * 获取连接方法
+        */
+    public static Connection getConnection(){
+        Connection conn=null;
+        try {
+            //1.注册驱动
+            Class.forName(driver);
+            //2.获得连接
+            conn=DriverManager.getConnection(url,username,password);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return conn;
+    }
+    /*
+        * 释放资源
+        */
+    public static void release(Connection conn,PreparedStatement pstmt,ResultSet rs){
+        if(rs!=null){
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if(pstmt!=null){
+            try {
+                pstmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if(conn!=null){
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }        
+    }
+}
+
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.junit.Test;
+
+/*
+ * 测试工具类
+ */
+public class TestUtils {
+    /*
+     * 根据id查询用户信息
+     */
+    @Test
+    public void FindUserById() {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;    
+        try {
+            // 1.获取连接
+            conn = JDBCUtils.getConnection();
+            // 2.编写sql语句
+            String sql = "select * from tbl_user where uid=?";
+            // 3.获取执行sql语句对象
+            pstmt = conn.prepareStatement(sql);
+            // 4.设置参数
+            pstmt.setInt(1, 2);
+            // 5.执行查询操作
+            rs = pstmt.executeQuery();
+            // 6.处理结果集
+            while (rs.next()) {
+                System.out.println(rs.getString(2) + "----" + rs.getString("upassword"));
+            }
+            // 释放资源放在此处不行滴！
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // 7.释放资源
+            JDBCUtils_V2.release(conn, pstmt, rs);
+        }
+    }
+    
+    /*
+     * 添加用户信息方法
+     */
+    @Test
+    public void Add(){
+        Connection conn=null;
+        PreparedStatement pstmt=null;
+        try{
+            //1.获取连接
+            conn=JDBCUtils.getConnection();
+            //2.编写sql语句
+            String sql="insert into tbl_user values(null,?,?)";
+            //3.获取执行sql语句对象
+            pstmt=conn.prepareStatement(sql);
+            //4.设置参数
+            pstmt.setString(1, "hehe");
+            pstmt.setString(2,"789");
+            //5.执行插入操作
+            int row=pstmt.executeUpdate();
+            if(row>0){
+                System.out.print("添加成功！");
+            }else{
+                System.out.print("添加失败 ");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            //6.释放资源
+            JDBCUtils_V2.release(conn, pstmt, null);
+        }
+    }
+    
+    /*
+     * 根据id删除用户信息 
+     */
+    @Test
+    public void DeleteById(){
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;    
+        try {
+            // 1.获取连接
+            conn = JDBCUtils.getConnection();
+            // 2.编写sql语句
+            String sql = "delete from tbl_user where uid=?";
+            // 3.获取执行sql语句对象
+            pstmt = conn.prepareStatement(sql);
+            // 4.设置参数
+            pstmt.setInt(1, 4);
+            // 5.执行删除操作
+            int row=pstmt.executeUpdate();
+            if(row>0){
+                System.out.print("删除成功！");
+            }else{
+                System.out.print("删除失败 ");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            //6.释放资源
+            JDBCUtils_V3.release(conn, pstmt, null);    
+        }
+    }
+    
+    /*
+     * 根据id更新用户信息
+     */
+    @Test
+    public void UpdateById(){
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;    
+        try {
+            // 1.获取连接
+            conn = JDBCUtils.getConnection();
+            // 2.编写sql语句
+            String sql = "update tbl_user set upassword=? where uid=?";
+            // 3.获取执行sql语句对象
+            pstmt = conn.prepareStatement(sql);
+            // 4.设置参数
+            pstmt.setString(1, "233");
+            pstmt.setInt(2, 5);
+            // 5.执行更新操作
+            int row=pstmt.executeUpdate();
+            if(row>0){
+                System.out.print("更新成功！");
+            }else{
+                System.out.print("更新失败 ");
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            //6.释放资源
+            JDBCUtils_V3.release(conn, pstmt, null);    
+        }
+    }
+}
+
+这个效率仍然不高，似乎没有达到想要的效果，需要进一步改进。
+在MySQL JDBC连接字符串中还可以加入参数，
+rewriteBatchedStatements=true，mysql默认关闭了batch处理，通过此参数进行打开，这个参数可以重写向数据库提交的SQL语句，具体参见：http://www.cnblogs.com/chenjianjx/archive/2012/08/14/2637914.html
+useServerPrepStmts=false，如果不开启(useServerPrepStmts=false)，使用com.mysql.jdbc.PreparedStatement进行本地SQL拼装，最后送到db上就是已经替换了?后的最终SQL.
+在此稍加改进，连接字符串中加入下面语句（代码构造方法中去掉注释）：
+connectStr += "?useServerPrepStmts=false&rewriteBatchedStatements=true
+
+private void doStore(BufferedReader bfr) throws ClassNotFoundException, SQLException, IOException {  
+        Class.forName("com.mysql.jdbc.Driver");  
+        Connection conn = DriverManager.getConnection(connectStr, username,password);  
+        conn.setAutoCommit(false); // 设置手动提交  
+        int count = 0;  
+        insert_sql = "INSERT INTO tb_ipinfos (iplong1,iplong2,ipstr1,ipstr2,ipdesc) VALUES (?,?,?,?,?)";
+        PreparedStatement psts = conn.prepareStatement(insert_sql);  
+        String line = null;  
+        while (null != (line = bfr.readLine())) {  
+            String[] infos = line.split(";");  
+            if (infos.length < 5)   continue;  
+            if (debug) {  
+                System.out.println(line);  
+            }  
+            psts.setLong(1, Long.valueOf(infos[0]));  
+            psts.setLong(2, Long.valueOf(infos[1]));  
+            psts.setString(3, infos[2]);  
+            psts.setString(4, infos[3]);  
+            psts.setString(5, infos[4]);  
+            psts.addBatch();          // 加入批量处理  
+            count++;              
+        }  
+        psts.executeBatch(); // 执行批量处理  
+        conn.commit();  // 提交  
+        System.out.println("All down : " + count);  
+        conn.close();  
+    }  
+java操作数据库批量更新主要为addBatch（） 和executeBatch（）方法，一般将数据存储在ArrayList里面，一次批量更新为一个addBatch(),全部更新完后，统一执行executeBatch（）方法。一下为代码：
+
+ public void UpdateData2(List<String[]> list){
+        try {
+        connection = getConnection();
+        String  sqlStr = "update t_mas_tph set TPHNAME=?,GENERATEPOSITION=?,GENERATELON=?,GENERATELAT=?,LANDPOSITION=?,LANDLON=?,LANDLAT=?,LOGINTIME=?,TPHINTENSITY=?  where TPHNUMBER=?";
+        pstm = connection.prepareStatement(sqlStr);
+         for (String[] strings : list) {
+             if(strings.length==8){
+                     pstm.setString(1, strings[1]);
+                     pstm.setString(2, strings[2]);
+                     pstm.setString(3,strings[3].split(",")[0] );
+                     pstm.setString(4, strings[3].split(",")[1]);
+                     pstm.setString(5, strings[4]);
+                     pstm.setString(6, strings[5].split(",")[0]);
+                     pstm.setString(7, strings[5].split(",")[1]);
+                     pstm.setObject(8, ChangeTime2Date(strings[6]));
+                     pstm.setString(9, strings[7]);
+                     pstm.setString(10,strings[0] );
+                     
+                   }else{
+                       continue;
+                   }
+             pstm.addBatch();
+            }
+          pstm.executeBatch();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally{
+            ReleaseResource();
+        }
+  }
+
+ 
+
+注：往数据库里面添加date类型数据时，需要用到String类型时间转化为date：
+    public Object ChangeTime2Date(String timeStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        try {
+            Date dateFormat =sdf.parse(timeStr);
+            java.sql.Timestamp dateSQL = new java.sql.Timestamp(dateFormat.getTime());
+            return dateSQL;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }

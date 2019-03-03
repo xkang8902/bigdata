@@ -1,0 +1,26 @@
+<!-- cloudera repo-->
+<repositories>
+     <repository>
+         <id>cloudera</id>
+         <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+     </repository>
+ </repositories>
+
+<dependency>
+    <groupId>org.apache.hbase</groupId>
+    <artifactId>hbase-client</artifactId>
+    <version>${hbase.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>org.apache.hbase</groupId>
+    <artifactId>hbase-server</artifactId>
+    <version>${hbase.version}</version>
+</dependency>
+
+<!-- hadoop -->
+<dependency>
+    <groupId>org.apache.hadoop</groupId>
+    <artifactId>hadoop-client</artifactId>
+    <version>${hadoop.version}</version>
+</dependency>

@@ -1,0 +1,10 @@
+拿到公司的邮箱后
+git config --global user.name=“xk”
+git config --global user.email="123@sing.com"
+1.将本地项目上传至GitHub步骤
+    git init   使用git管理本地目录  注意本地目录最后与Git仓库的名字是平级的
+    git add README.md   将本地文件添加到本地缓存区  实际开发中一般使用 `git add -A`，使用-A:将新增、删除、修改的文件改动全保存至缓存区；
+    git commit -m "首次提交代码" 将本地文件提交到本地仓库  实际开发中一般使用`git commit -am "说明的文字"`，使用 -a：如果没文件更改操作（增、删、改名）就可以省略git add指令；
+    git remote add origin https://github.com/wteam-xq/testGit.git   将本地仓库与远程仓库进行关联
+    git push -u origin master  将本地的分支同步到远程仓库  实际开发中 该指令后需要输入github 账号以及密码。（首次提交注意别遗漏`-u`指定默认主机）
+2.将远程仓库同步到本地仓库

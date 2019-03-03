@@ -1,0 +1,14 @@
+@charset "utf-8";
+.alert { width:100%; height:100%; position:fixed; _position:absolute; top:0; left:0; z-index:9999; display:none; }
+.alert .alert_bg { width:100%; height:100%; background:#000; filter:alpha(opacity=80); opacity:.7; position:absolute; top:0; left:0; }
+.alert .alert_box_pos { position:absolute; top:50%; left:50%; min-height:160px; min-width:300px; _width:300px; height:160px; }
+.alert .alert_box { border:4px solid #007ebf; -moz-box-shadow:3px 3px 4px rgba(40,40,40,.4); -webkit-box-shadow:3px 3px 4px rgba(40,40,40,.4); box-shadow:3px 3px 4px rgba(40,40,40,.4); background:#fff; position:relative; width:100%;height:100%; margin-left:-50%; top:-50%;}
+.alert .alert_main{min-height:20px;  _height:20px;  margin-bottom:20px; }
+.alert .alert_box header,.alert .alert_box .header{ display:block;height:50px; overflow:hidden;background:#007ebf; border-bottom:#ccc solid 1px;text-align:left;}
+.alert .alert_box header,.alert .alert_box .header.top{background: rgb(134, 38, 50);height:30px;padding:10px;border-bottom:1px solid #ccc;line-height:30px;color: #fff;font-size:16px;}
+.alert .alert_box header h1,.alert .alert_box .header h1 { font:14px/1.5  微软雅黑, Tahoma, 宋体, Verdana; font-weight:bold; line-height:50px; padding-left:36px; margin-left:12px;}
+.alert .alert_box footer,.alert .alert_box .footer { padding:0 20px 20px; text-align:center; }
+.alert .alert_box .alert_main { padding:20px 20px 0 ;}
+.alert .alert_close { float:right; text-align:center; font:18px/18px Tahoma; color:white; cursor:pointer; width:20px; height:20px; overflow:hidden; margin:10px 4px 0 0; border:#FCF8EF solid 1px; }
+.alert .alert_close:hover {border:#EEE4CC solid 1px; background:#fff;color:#007ebf;}
+#alert .alert_main{ text-align:center;}

@@ -1,0 +1,216 @@
+1.Runnable 【任务】
+    1. 实现该接口并重写run方法
+    2. 利用该类的对象创建线程
+    3. 线程启动时就会自动调用该对象的run方法
+    通常在开发中结合ExecutorService使用,将任务的提交与任务的执行解耦开,同时也能更好地利用Executor提供的各种特性
+    ExecutorService executor = Executors.newCachedThreadPool();
+                    executor.submit(new Runnable() { 
+                            public void run() {
+                                //TODO
+                            }
+                        });
+    executor.shutdown();
+相对于继承Thread来创建线程方式，使用Runnable可以让你的实现类同时实现多个接口，而相对于Callable及Future，Runnable方法并不返回任务执行结果且不能抛出异常
+
+2.Callable 【任务】
+    与Runnable不同的是，Callable是个泛型参数化接口，并能返回线程的执行结果，且能在无法正常计算时抛出异常
+    public interface Callable<V> {
+        V call() throws Exception;
+    }
+    Runnable与Callable不同点：
+        1. Runnable不返回任务执行结果，Callable可返回任务执行结果
+        2. Callable在任务无法计算结果时抛出异常，而Runnable不能
+        3. Runnable任务可直接由Thread的start方法或ExecutorService的submit方法去执行
+    Callable并不像Runnable那样通过Thread的start方法就能启动实现类的run方法，所以它通常利用ExecutorService的submit方法去启动call方法自执行任务，
+    而ExecutorService的submit又返回一个Future类型的结果，因此Callable通常也与Future一起使用
+
+    ExecutorService pool = Executors.newCachedThreadPool();
+    Future<String> future = pool.submit(new Callable{
+        public void call(){
+                //TODO
+        }
+    });
+
+3.Future 【任务的结果】
+    Future保存异步计算的结果,可以在我们执行任务时去做其他工作，并提供了以下几个方法
+    * cancel(boolean mayInterruptIfRunning)：试图取消执行的任务，参数为true时直接中断正在执行的任务，否则直到当前任务执行完成，成功取消后返回true，否则返回false
+    * isCancel()：判断任务是否在正常执行完前被取消的，如果是则返回true
+    * isDone()：判断任务是否已完成
+    * get()：等待计算结果的返回，如果计算被取消了则抛出异常
+    * get(long timeout,TimeUtil unit)：设定计算结果的返回时间，如果在规定时间内没有返回计算结果则抛出TimeOutException
+    使用Future的好处：
+        1. 获取任务的结果，判断任务是否完成，中断任务
+        1. Future的get方法很好的替代的了Thread.join或Thread,join(long millis)
+        2. Future的get方法可以判断程序代码(任务)的执行是否超时，如：
+        try{
+            future.get(60,TimeUtil.SECOND);
+        }catch(TimeoutException timeout){
+            log4j.log("任务越野，将被取消！！");
+            future.cancel();
+        }
+
+4.FutureTask 【任务和结果】
+    FutureTask实现了RunnableFuture接口，提供了即可以使用Runnable来执行任务，又可以使用Future执行任务并取得结果的构造器，所以可以利用FutureTask去封装Runnable或Callable对象，之后再submit任务
+    FutureTask(Callable<V> callable)  任务和执行结果
+    FutureTask(Runnable runnable, V result)  任务和指定结果
+
+5.Thread 
+    public class Thread implements Runnable 
+thread和runnable比较:
+    实现Runnable接口相比继承Thread类有如下好处：
+        1、避免继承的局限，一个类可以继承多个接口。
+        2、适合于资源的共享。
+    Thread:
+        public class MyThreadWithExtends extends Thread{  }
+        MyThreadWithExtends thread1 = new MyThreadWithExtends();  
+        MyThreadWithExtends thread2 = new MyThreadWithExtends();  
+        MyThreadWithExtends thread3 = new MyThreadWithExtends();    
+        thread1.start();  
+        thread2.start();  
+        thread3.start();         
+        //每个线程都独立，不共享资源，每个线程都卖出了10张票，总共卖出了30张。
+    Runnable:
+        public class MyThreadWithImplements implements Runnable{  }
+        MyThreadWithImplements myRunnable = new MyThreadWithImplements();  
+        Thread thread1 = new Thread(myRunnable, "窗口一");  
+        Thread thread2 = new Thread(myRunnable, "窗口二");  
+        Thread thread3 = new Thread(myRunnable, "窗口三");  
+        thread1.start();  
+        thread2.start();  
+        thread3.start();  
+        //每个线程共享了对象myRunnable的资源，卖出的总票数是10张
+
+
+ThreadPoolExecutor线程池或者ExecutorService，可以有两种启动线程的方法：submit和excute
+    submit()方法，可以提供Future < T > 类型的返回值
+    execute()方法，无返回值
+
+    public void execute(Runnable command) 
+    //Future 返回null 表示任务执行成功 反之失败   传入runnable 执行是没有返回值的
+    public Future<?> submit(Runnable task) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<Void> ftask = newTaskFor(task, null);
+        execute(ftask);
+        return ftask;
+    }
+    //Future task执行没有返回值 手动指定result使之包含在Future返回值中   传入runnable 执行是没有返回值的
+    public <T> Future<T> submit(Runnable task, T result) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<T> ftask = newTaskFor(task, result);
+        execute(ftask);
+        return ftask;
+    }
+    //Future 是task的执行结果   传入callable future内是callable执行的结果
+    public <T> Future<T> submit(Callable<T> task) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<T> ftask = newTaskFor(task);
+        execute(ftask);
+        return ftask;
+    }
+
+ExecutorService案例:
+//一、使用future和runnable或者callable处理结果和任务
+public class RunnableTestMain {
+
+    public static void main(String[] args) {
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        /**
+         * execute(Runnable x) 没有返回值。可以执行任务，但无法判断任务是否成功完成。
+         */
+        pool.execute(new RunnableTest("Task1")); 
+        /**
+         * submit(Runnable x) 返回一个future。可以用这个future来判断任务是否成功完成。请看下面：
+         */
+        Future future = pool.submit(new RunnableTest("Task2"));     //************使用future接收结果
+        try {
+            if(future.get()==null){                                 //如果Future's get返回null，任务完成  ************
+                System.out.println("任务完成");
+            }
+        } catch (InterruptedException e) {
+        } catch (ExecutionException e) {
+            //否则我们可以看看任务失败的原因是什么
+            System.out.println(e.getCause().getMessage());
+        }
+    }
+}
+
+public class RunnableTest implements Runnable {
+
+    private String taskName;
+
+    public RunnableTest(final String taskName) {
+        this.taskName = taskName;
+    }
+    @Override
+    public void run() {
+        System.out.println("Inside "+taskName);
+        throw new RuntimeException("RuntimeException from inside " + taskName);
+    }
+}
+
+//二、使用FutureTask来处理任务和结果
+    public class MyCallable implements Callable<String> {  
+        private long waitTime;   
+        public MyCallable(int timeInMillis){   
+            this.waitTime=timeInMillis;  
+        }  
+        @Override  
+        public String call() throws Exception {  
+            Thread.sleep(waitTime);  
+            //return the thread name executing this callable task  
+            return Thread.currentThread().getName();  
+        }  
+
+    }  
+    public class FutureTaskExample {  
+        public static void main(String[] args) {  
+            MyCallable callable1 = new MyCallable(1000);                         // 要执行的任务  
+            MyCallable callable2 = new MyCallable(2000);  
+
+            FutureTask<String> futureTask1 = new FutureTask<String>(callable1);  // 使用FutureTask封装任务和执行结果**************
+            FutureTask<String> futureTask2 = new FutureTask<String>(callable2);  // 将Callable写的任务封装到一个由执行者调度的FutureTask对象
+
+            ExecutorService executor = Executors.newFixedThreadPool(2);          // 创建线程池并返回ExecutorService实例  
+            executor.execute(futureTask1);  // 执行任务  
+            executor.execute(futureTask2);    
+
+            while (true) {  
+                try {  
+                    if(futureTask1.isDone() && futureTask2.isDone()){//  两个任务都完成  
+                        System.out.println("Done");  
+                        executor.shutdown();                                    // 关闭线程池和服务   
+                        return;  
+                    }  
+
+                    if(!futureTask1.isDone()){                                   // 任务1没有完成，会等待，直到任务完成  
+                        System.out.println("FutureTask1 output="+futureTask1.get());  //get()会阻塞当前线程 一直等直到提交的线程结束
+                    }  
+
+                    System.out.println("Waiting for FutureTask2 to complete");  
+                    String s = futureTask2.get(200L, TimeUnit.MILLISECONDS);     //get(long timeout,TimeUtil unit) 会阻塞timeout的时间，如果超时则抛出异常
+                    if(s !=null){  
+                        System.out.println("FutureTask2 output="+s);  
+                    }  
+                } catch (InterruptedException | ExecutionException e) {  
+                    e.printStackTrace();  
+                }catch(TimeoutException e){  
+                    //do nothing  
+                }  
+            }  
+        }  
+    }  
+    运行如上程序后，可以看到一段时间内没有输出，因为get()方法等待任务执行完成然后才输出内容.
+
+    输出结果如下：
+    FutureTask1 output=pool-1-thread-1
+    Waiting for FutureTask2 to complete
+    Waiting for FutureTask2 to complete
+    Waiting for FutureTask2 to complete
+    Waiting for FutureTask2 to complete
+    Waiting for FutureTask2 to complete
+    FutureTask2 output=pool-1-thread-2
+    Done
+
+
+

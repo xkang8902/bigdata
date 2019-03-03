@@ -1,0 +1,64 @@
+hadoop:
+    hadoop HA snn                                                                 
+    hdfs: 读写                           ok
+    MapReduce：shuffle                   ok
+    yarn:资源分配和作业调度                 ok
+hive:
+    hive 架构                           ok
+    hive 优化                              ok
+spark:
+    spark 作业运行                         ok     
+    spark 作业调度                          ok
+    spark core sql streaming 优化
+    spark streaming 架构                    ok
+storm:
+    storm 运行原理                      ok
+    storm 精髓                          ok
+kafka:
+    kafka 架构                          ok
+    kafka 原理                          ok
+redis: 
+    Redis 架构                          ok
+mysql:
+    mysql 架构
+    mysql 优化                          ok
+Scala:
+    Scala class object trait
+    Scala 数据结构
+java:
+    Java class interface 
+    java 数据结构
+    Java 多线程
+    Java 设计模式
+
+code:
+    Java 
+        排序 （冒泡，快排 归并）
+        查找（二分查找） 
+        链表操作
+        树遍历
+        单例
+    大数据
+        MapReduce Wordcount
+        spark core Wordcount
+        spark sql Wordcount
+        spark streaming Wordcount
+        spark常用算子:
+            聚合算子:combinebykey aggregatebykey reducebykey
+            分组算子:groupbykey
+            排序算子:sorted sortby sortwith
+            实时计算:upstatebykey  reducebykeyandwindow
+        storm Wordcount
+        hive sql
+            建表
+            数据导入导出
+            多表关联查询
+            分组聚合
+            组内统计（窗口函数）
+        mysql sql
+
+
+
+
+
+

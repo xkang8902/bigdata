@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.isprint.cnaac.server.dao.AuditHistoryMapper" >
+  <resultMap id="BaseResultMap" type="com.isprint.cnaac.server.domain.entity.AuditHistory" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="user_uuid" property="userUuid" jdbcType="VARCHAR" />
+    <result column="audit_result" property="auditResult" jdbcType="VARCHAR" />
+    <result column="reason" property="reason" jdbcType="VARCHAR" />
+    <result column="audit_time" property="auditTime" jdbcType="TIMESTAMP" />
+    <result column="audit_by" property="auditBy" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, user_uuid, audit_result, reason, audit_time, audit_by
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from audit_history
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from audit_history
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.isprint.cnaac.server.domain.entity.AuditHistory" >
+    insert into audit_history (id, user_uuid, audit_result, 
+      reason, audit_time, audit_by
+      )
+    values (#{id,jdbcType=INTEGER}, #{userUuid,jdbcType=VARCHAR}, #{auditResult,jdbcType=VARCHAR}, 
+      #{reason,jdbcType=VARCHAR}, #{auditTime,jdbcType=TIMESTAMP}, #{auditBy,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.isprint.cnaac.server.domain.entity.AuditHistory" >
+    insert into audit_history
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="userUuid != null" >
+        user_uuid,
+      </if>
+      <if test="auditResult != null" >
+        audit_result,
+      </if>
+      <if test="reason != null" >
+        reason,
+      </if>
+      <if test="auditTime != null" >
+        audit_time,
+      </if>
+      <if test="auditBy != null" >
+        audit_by,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="userUuid != null" >
+        #{userUuid,jdbcType=VARCHAR},
+      </if>
+      <if test="auditResult != null" >
+        #{auditResult,jdbcType=VARCHAR},
+      </if>
+      <if test="reason != null" >
+        #{reason,jdbcType=VARCHAR},
+      </if>
+      <if test="auditTime != null" >
+        #{auditTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="auditBy != null" >
+        #{auditBy,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.isprint.cnaac.server.domain.entity.AuditHistory" >
+    update audit_history
+    <set >
+      <if test="userUuid != null" >
+        user_uuid = #{userUuid,jdbcType=VARCHAR},
+      </if>
+      <if test="auditResult != null" >
+        audit_result = #{auditResult,jdbcType=VARCHAR},
+      </if>
+      <if test="reason != null" >
+        reason = #{reason,jdbcType=VARCHAR},
+      </if>
+      <if test="auditTime != null" >
+        audit_time = #{auditTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="auditBy != null" >
+        audit_by = #{auditBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.isprint.cnaac.server.domain.entity.AuditHistory" >
+    update audit_history
+    set user_uuid = #{userUuid,jdbcType=VARCHAR},
+      audit_result = #{auditResult,jdbcType=VARCHAR},
+      reason = #{reason,jdbcType=VARCHAR},
+      audit_time = #{auditTime,jdbcType=TIMESTAMP},
+      audit_by = #{auditBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  
+  <!-- 以下语句是自定义的 -->
+  <select id="getLatestedCommentByUserUUID" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from audit_history
+    where user_uuid = #{user_uuid} order by id desc limit 1
+  </select>
+</mapper>

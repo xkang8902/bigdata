@@ -1,0 +1,29 @@
+Sqoop常用命令
+1、列出mysql数据库中的所有数据库
+   sqoop list-databases --connect jdbc:mysql://localhost:3306/ -username 111 -password 111
+2、连接mysql并列出数据库中的表
+   sqoop list-tables --connect jdbc:mysql://localhost:3306/test --username 111 --password 111
+3、将关系型数据的表结构复制到hive中
+   sqoop create-hive-table --connect jdbc:mysql://localhost:3306/test --table users --username dyh --password 000000 
+   --hive-table users  --fields-terminated-by "\0001"  --lines-terminated-by "\n";
+   参数说明：
+   --fields-terminated-by "\0001"  是设置每列之间的分隔符，"\0001"是ASCII码中的1，它也是hive的默认行内分隔符， 
+   而sqoop的默认行内分隔符为"，" --lines-terminated-by "\n"  设置的是每行之间的分隔符，此处为换行符，也是默认的分隔符；
+   注意：只是复制表的结构，表中的内容没有复制
+4、将数据从关系数据库导入文件到hive表中
+   sqoop import --connect jdbc:mysql://localhost:3306/test --username dyh --password 000000 
+   --table users --hive-import --hive-table users -m 2 --fields-terminated-by "\0001";
+   参数说明：
+   -m 2 表示由两个map作业执行；
+   --fields-terminated-by "\0001"  需同创建hive表时保持一致；
+5、将hive中的表数据导入到mysql数据库表中
+   sqoop export --connect jdbc:mysql://192.168.20.118:3306/test --username dyh --password 000000 
+   --table users --export-dir /user/hive/warehouse/users/part-m-00000 --input-fields-terminated-by '\0001'
+6、将数据从关系数据库导入文件到hive表中，--query 语句使用
+   sqoop import --append --connect jdbc:mysql://192.168.20.118:3306/test --username dyh --password 000000
+   --query "select id,age,name from userinfos where \$CONDITIONS"  -m 1  --target-dir /user/hive/warehouse/userinfos2
+   --fields-terminated-by "
+7、将数据从关系数据库导入文件到hive表中，--columns  --where 语句使用
+   sqoop import --append --connect jdbc:mysql://192.168.20.118:3306/test --username dyh --password 000000 
+   --table userinfos --columns "id,age,name"  --where "id > 3 and (age = 88 or age = 80)"  -m 1  
+   --target-dir /user/hive/warehouse/userinfos2 --fields-terminated-by ",";

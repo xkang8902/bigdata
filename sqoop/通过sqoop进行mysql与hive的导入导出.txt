@@ -1,0 +1,85 @@
+通过sqoop进行mysql与hive的导入导出。 
+    1. 关系型数据库mysql表存取的结果，导出到hive; 
+    2. 运用hive对结果进行清洗过滤，并将结果输出到HDFS; 
+    3. 将HDFS的结果再次导出到关系型数据库mysql。
+
+一、验证sqoop与mysql连接是否成功
+    1.进入到sqoop的bin目录下，执行命令查看mysql中所有的db
+        ./sqoop list-databases --connect jdbc:mysql://192.168.213.1:3306/ --username 'root' --password 'root'
+
+    2.执行上述命令，如果提示 
+        java.sql.SQLException: Access denied for user ‘root’@’192.168.213.130’，则需要mysql中开放远程连接权限。 
+        在mysql中执行以下命令
+
+        /*将用户root的host设置为%*/
+        mysql> update user set host='%' where user='root';
+        mysql> flush privileges;
+        /*任意主机以用户root和密码mypwd连接到mysql服务器*/
+        mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'root' WITH GRANT OPTION;
+        mysql> flush privileges;
+
+    3.执行成功后，列出mysql中所有的db。
+
+二 将mysql表数据导入hive
+    默认导入到default库
+        sqoop import --connect jdbc:mysql://192.168.213.1:3306/casedb  --username root --password root --table category --hive-import --create-hive-table -m 1
+
+    指定导入到edwin库
+        sqoop import --connect jdbc:mysql://192.168.213.1:3306/casedb  --username root --password root --table category --hive-import --create-hive-table --hive-table edwin.category -m 1
+
+三 hive执行且输出结果到HDFS
+    1.将hive表中的t_class表，执行查询过滤后，结果输出到HDFS的 /output/t_class目录
+
+        hive>
+        INSERT OVERWRITE DIRECTORY '/output/t_class'
+        ROW FORMAT DELIMITED
+        FIELDS TERMINATED BY '\t'
+        STORED AS TEXTFILE
+        SELECT * FROM t_class WHERE id > 100;
+
+    2.执行结果后，可以通过HDFS 命令查看
+
+        hadoop fs -cat /output/t_class/*
+
+四 将HDFS结果导出到mysql
+    1.首先在mysql中创建表
+        CREATE TABLE `t_class` (
+        `id` int(11) default NULL,
+        `name` varchar(20) default NULL,
+        `descript` varchar(20) default NULL
+        ) 
+    2.导出
+        sqoop export --connect jdbc:mysql://192.168.213.1:3306/casedb --username root --password root --table t_class --direct --export-dir /output/t_class --driver com.mysql.jdbc.Driver --input-fields-terminated-by '\t' --lines-terminated-by '\n'
+    3.数据导出到mysql的t_class表。
+
+=============================================================================================================
+
+编写Shell批量执行命令
+一、在/usr/bigdata/timersh目录下创建一个shell脚本（如：sqooptimer.sh），内容如下：
+    #!/bin/sh
+    #将mysql表数据导入hive
+        sqoop import --connect jdbc:mysql://192.168.213.1:3306/casedb  --username root --password root --table category --hive-import --create-hive-table -m 1
+    #将hive表中的t_class表，执行查询过滤后，结果输出到HDFS的 /output/t_class目录
+        hive -e "INSERT OVERWRITE DIRECTORY '/output/t_class'
+        ROW FORMAT DELIMITED
+        FIELDS TERMINATED BY '\t'
+        STORED AS TEXTFILE
+        SELECT * FROM t_class WHERE id > 100;"
+    #删除t_class表中原有数据，避免多次插入重复数据
+        sqoop eval --connect jdbc:mysql://192.168.35.6:3306/lexian --username root --password root  --query "DELETE FROM t_class"
+    #将HDFS结果导出到mysql的t_class表中
+        sqoop export --connect jdbc:mysql://192.168.213.1:3306/casedb --username root --password root --table t_class --direct --export-dir /output/t_class --driver com.mysql.jdbc.Driver --input-fields-terminated-by '\t' --lines-terminated-by '\n'
+        hadoop fs -rmr /output/browseresult
+
+二、对shell脚本赋予可执行权限
+    chmod +x sqooptimer.sh
+
+三、验证shell脚本执行是否正确
+    在命令行模式下，执行该shell脚本
+        ./sqooptimer.sh
+    正确执行后，结果如《通过sqoop进行mysql与hive的导入导出》结果一致。
+四、定期执行shell脚本
+    通过crontab -e 加入以下命令
+    #每5分钟执行一次命令
+        */5 * * * * . /etc/profile; /bin/sh /usr/bigdata/timersh/sqooptimer.sh
+

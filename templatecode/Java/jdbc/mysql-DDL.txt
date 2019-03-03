@@ -1,0 +1,75 @@
+关于MySQL的CRUD操作
+一、清除mysql表中数据
+    delete from 表名;
+    truncate table 表名;
+    不带where参数的delete语句可以删除mysql表中所有内容，使用truncate table也可以清空mysql表中所有内容。
+    效率上truncate比delete快，但truncate删除后不记录mysql日志，不可以恢复数据。
+    delete的效果有点像将mysql表中所有记录一条一条删除到删完，而truncate相当于保留mysql表的结构，重新创建了这个表，所有的状态都相当于新表。
+
+二、删除表中的某些数据
+    delete from命令格式：delete from 表名 where 表达式
+    例如，删除表 MyClass中编号为1 的记录：
+    mysql> delete from MyClass where id=1;
+ 
+三、修改表
+    1.选择数据库
+    >use 数据库名;
+
+    2.查询所有数据表
+    > show tables;
+
+    3.查询表的字段信息
+    > desc 表名称;
+
+        3.1.修改某个表的字段类型及指定为空或非空
+        > alter table 表名称 change 字段名称 字段名称 字段类型 [是否允许非空];
+        > alter table 表名称 modify 字段名称 字段类型 [是否允许非空];
+
+        3.2.修改某个表的字段名称及指定为空或非空
+        > alter table 表名称 change 字段原名称 字段新名称 字段类型 [是否允许非空];
+
+        例如:
+        修改表expert_info中的字段birth,允许其为空
+        > alter table expert_info change birth birth varchar(20) null;
+ 
+
+1.增加一个字段(一列)
+alter table table_name add column column_name type default value; type指该字段的类型,value指该字段的默认值
+例如:alter table mybook add column publish_house varchar(10) default ”;
+
+2.更改一个字段名字(也可以改变类型和默认值)
+alter table table_name change sorce_col_name dest_col_name type default value; source_col_name指原来的字段名称,dest_col_name
+指改后的字段名称
+例如:alter table Board_Info change IsMobile IsTelphone int(3) unsigned default 1;
+
+3.改变一个字段的默认值
+alter table table_name alter column_name set default value;
+例如:alter table book alter flag set default '0′;
+ 
+4.改变一个字段的数据类型
+alter table table_name change column column_name column_name type;
+例如:alter table userinfo change column username username varchar(20);
+ 
+5.向一个表中增加一个列做为主键
+alter table table_name add column column_name type auto_increment PRIMARY KEY;
+例如:alter table book add column id int(10) auto_increment PRIMARY KEY;
+ 
+6.数据库某表的备份,在命令行中输入:
+mysqldump -u root -p database_name table_name > bak_file_name
+例如:mysqldump -u root -p f_info user_info > user_info.dat
+ 
+
+7.导出数据
+select_statment into outfile”dest_file”;
+例如:select cooperatecode,createtime from publish limit 10 into outfile”/home/mzc/temp/tempbad.txt”;
+ 
+8.导入数据
+load data infile”file_name” into table table_name;
+例如:load data infile”/home/mzc/temp/tempbad.txt” into table pad;
+ 
+9.将两个表里的数据拼接后插入到另一个表里。下面的例子说明将t1表中的com2和t2表中的com1字段的值拼接后插入到tx表对应的字段里。
+例如:insert into tx select t1.com1,concat(t1.com2,t2.com1) from t1,t2;
+
+10,删除字段
+alter table form1 drop column 列名;
+

@@ -1,0 +1,230 @@
+Spark的运行模式(Spark应用在哪儿运行)
+  local: 本地运行
+  standalone：使用Spark自带一个资源管理框架，将spark应用可以提交到该资源管理框架上运行(分布式的)
+  yarn：将spark应用提交到yarn上进行运行
+  mesos：类似yarn的一种资源管理框架
+
+============================================
+local
+  Spark local on linux(spark-shell命令)
+  Spark Local的环境配置：
+    -1. 安装好JDK、SCALA、Hadoop等依赖环境
+    -2. 解压spark编译好的压缩包
+      cd /opt/cdh-5.3.6
+      tar -zxvf /opt/tools/workspace/spark/spark-1.6.1-cdh5.3.6/spark-1.6.1-bin-2.5.0-cdh5.3.6.tgz
+    -3. 创建软连接
+      cd /opt/cdh-5.3.6
+      ln -s /opt/cdh-5.3.6/spark-1.6.1-bin-2.5.0-cdh5.3.6/ spark 
+    -4. 进入spark根目录，修改conf中的配置文件
+      cd spark
+      mv conf/spark-env.sh.template conf/spark-env.sh
+      vim spark-env.sh
+        JAVA_HOME=/opt/modules/java
+        SCALA_HOME=/opt/modules/scala
+        HADOOP_CONF_DIR=/opt/cdh-5.3.6/hadoop/etc/hadoop
+        SPARK_LOCAL_IP=bigdata-01.yushu.com
+        ### 
+          上面四个配置项中，除了HADOOP_CONF_DIR外，其它的必须给定；HADOOP_CONF_DIR给定的主要功能是：给定连接HDFS的相关参数(实际上本地运行的时候，只需要给定core-site.xml和hdfs-site.xml)
+        ###
+    -5. 测试linux上的本地环境
+      启动HDFS
+        
+      ./bin/run-example SparkPi 10
+      ./bin/spark-shell
+
+    -6. 上传README.md到HDFS根目录
+    -7. 测试
+    val textFile = sc.textFile("/README.md")
+    textFile.count()
+    textFile.first()
+    val linesWithSpark = textFile.filter(line => line.contains("Spark"))
+    linesWithSpark.count()
+
+=======================================
+    Spark源码导入IDEA
+      -1. 最好指定maven源为ali的maven源
+      -2. 将《repository(Windows 开发环境依赖maven本地仓库).zip》解压到本地maven源，默认文件夹位置是:~/.m2
+
+====================================================
+Spark on Standalone
+  将spark应用运行在standalone上
+  Standalone是一个Spark自带的资源管理框架，功能类似yarn
+  Yarn的框架:
+    ResourceManager：管理集群的资源，包括：监控、申请...
+    NondManager: 管理当前节点的资源以及启动container中的task任务
+    资源：
+      CPU&内存
+  Standalone的框架：
+    Master：集群资源管理，包括：监控、申请...
+    Worker: 任务执行节点的资源管理，包括资源管理以及executor启动
+    资源：
+      CPU&内存
+  Standalone的配置：
+    -1. 前提要求：Spark的local本地模式可以成功运行
+    -2. 修改${SPARK_HOME}/conf中的配置文件
+      vim spark-env.sh
+SPARK_MASTER_IP=bigdata-01.yushu.com
+SPARK_MASTER_PORT=7070
+SPARK_MASTER_WEBUI_PORT=8080
+SPARK_WORKER_CORES=2  ## 一个worker服务中可以包含多少核的CPU，逻辑上的
+SPARK_WORKER_MEMORY=2g  ## 一个worker服务中可以包含多少内存，逻辑上的
+SPARK_WORKER_PORT=7071
+SPARK_WORKER_WEBUI_PORT=8081
+SPARK_WORKER_INSTANCES=2 ## 指定一台服务器可以启动多少个work服务
+
+    mv slaves.template slaves
+    vim slaves
+bigdata-01.yushu.com ## 给定work服务所在机器的IP地址或者主机名，一行一个
+    
+    -3. 启动服务
+       ./sbin/start-master.sh
+       ./sbin/start-slaves.sh
+       ===> ./sbin/start-all.sh
+       （关闭服务使用: ./sbin/stop-all.sh）
+    -4. 测试
+       jps： 能够看到master和worker服务
+       webui: http://bigdata-01.yushu.com:8080/
+       spark-shell测试：
+         bin/spark-shell --master spark://bigdata-01.yushu.com:7070
+val lines = sc.textFile("/user/yushu/spark/data/word.txt")
+val words = lines.flatMap(line => line.split(" "))
+val filteredWrods = words.filter(word => word.trim.nonEmpty)
+val wordAndNums = filteredWrods.map(word => (word.trim, 1))
+val result = wordAndNums.reduceByKey((a, b) => a + b)
+result.take(10)
+
+
+=================================================
+Spark Standalone分布式配置
+  -1. 配置hadoop分布式环境前置条件均配置(eg：ssh、ip地址映射...)
+  -2. 先配置一台成功的单节点的standalone机器
+  -3. 将所有worker节点的ip地址或者主机名copy到slaves文件中
+  -4. 将配置好的Spark环境copy到所有的worker服务所在节点上，并且保证在所有的节点上，spark的local模式均可以正常运行
+  -5. 使用sbin/start-all.sh启动所有服务
+
+
+=============================================
+Spark Standalone Master(HA):
+  http://spark.apache.org/docs/1.6.1/spark-standalone.html#high-availability
+  -1. Single-Node Recovery with Local File System
+    基于本地文件系统的Master恢复机制
+    修改${SPARK_HOME}/conf/spark-env.sh
+SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=FILESYSTEM -Dspark.deploy.recoveryDirectory=/tmp"
+  -2. Standby Masters with ZooKeeper
+    基于zk提供热备(HA)的master机制
+    修改${SPARK_HOME}/conf/spark-env.sh
+SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=bigdata-01.yushu.com:2181,bigdata-01.yushu.com:2181,bigdata-01.yushu.com:2181 -Dspark.deploy.zookeeper.dir=/spark"
+
+
+=============================================
+应用监控
+  -1. 运维人员会使用专门的运维工具进行监控，eg: zabbix等，（网络、磁盘、内存、cpu、进程等）
+  -2. 使用CM(CDH)、Ambari(Apache、HDP)大数据专门的运维管理工具
+  -3. 通过软件自带的web页面进行监控，eg: spark 8080、 hdfs 50070、mapreduce job history 19888....
+  -4. 通过oozie等调度工具进行监控(当job执行失败的时候可以通知开发人员，通过email、短信)
+  -5. Linux上的进程好像是可以自动恢复的（supervise方式启动）
+
+===========================================
+Spark应用监控：
+  http://spark.apache.org/docs/1.6.1/monitoring.html
+  -1. 针对正在运行的应用，可以通过webui来查看，默认端口号是4040，当4040被占用的时候，端口号往上递推.
+  -2. 针对于已经执行完的job/应用，可以通过spark的job history server服务来查看
+
+MapReduce Job History服务：
+  -1. 开启日志聚集功能
+  -2. 给定日志上传的hdfs文件夹
+  -3. 启动mr的job history服务(读取hdfs上的文件内容，然后进行展示操作)
+
+Spark Job History服务：
+  -1. 创建HDFS上用于存储spark应用执行日志的文件夹
+    hdfs dfs -mkdir -p /spark/history
+  -2. 修改配置文件(开启日志聚集功能)
+    mv spark-defaults.conf.template spark-defaults.conf
+    vim spark-defaults.conf
+spark.eventLog.enabled           true
+spark.eventLog.dir               hdfs://bigdata-01.yushu.com:8020/spark/history
+   -3. 测试spark的应用是否会将执行的日志数据上传到HDFS上
+     ./bin/spark-shell
+   -4. 配置spark的job history相关参数(指定从哪儿读取数据)
+     vim spark-env.sh
+SPARK_HISTORY_OPTS="-Dspark.history.fs.logDirectory=hdfs://bigdata-01.yushu.com:8020/spark/history"
+   -5. 启动history 服务
+      sbin/start-history-server.sh
+      关闭：sbin/stop-history-server.sh
+   -6. 测试
+      访问webui: http://bigdata-01.yushu.com:18080/
+
+
+Spark Job History Rest API:
+   http://<server-url>:18080/api/v1 
+   eg：http://bigdata-01.yushu.com:18080/api/v1/applicationshttp://bigdata-01.yushu.com:18080/api/v1/applications/local-1498985874725/logs 
+
+====================================================
+Spark on yarn
+  http://spark.apache.org/docs/1.6.1/running-on-yarn.html
+  前提：
+    1. yarn的配置信息(yarn-site.xml)在spark的classpath中 
+       ==> 配置HADOOP_CONF_DIR在spark-env.sh中<配置本地运行环境>
+    2. 启动yarn
+  
+ 
+./bin/spark-submit \
+     --class com.yushu.bigdata.spark.app.core.LogPvAndUvCountSpark \
+    --master yarn \
+    --deploy-mode cluster \
+    --driver-memory 1g \
+    --executor-memory 1g \
+    --executor-cores 1 \
+    --num-executors 3 \
+    /home/yushu/logs-analyzer.jar  
+
+
+./bin/spark-submit \
+     --class com.yushu.bigdata.spark.app.core.LogPvAndUvCountSpark \
+    --master yarn \
+    --deploy-mode client \
+    --driver-memory 1g \
+    --executor-memory 1g \
+    --executor-cores 1 \
+    --num-executors 3 \
+    /home/yushu/logs-analyzer.jar  
+
+
+==============================================================
+==============================================================
+Spark应用的构建及提交流程：
+  -1. Driver中构建RDD的DAG图
+  -2. RDD的job被触发(需要将具体的rdd执行过程提交到executor上执行，此时可以从4040页面看到执行的内容)
+  -3. Driver中的DAGScheduler将RDD划分为不同的Stage阶段
+  -4. Driver中的TaskScheduler将一个一个的stage对应的task提交到executor上执行
+Spark应用通过spark-submit命令提交的执行过程：
+  -1. client向资源管理器申请资源(Yarn<ResourceManager>、Standalone<mster>等), 运行driver程序；如果是client模式，driver的运行资源不需要申请
+    -a. 当运行模式为spark on yarn cluster的情况下，此时driver和ApplicationMaster功能合并
+    -b. 当运行模式为spark on yarn client的情况下，driver不需要申请资源，此时申请ApplicationMaster运行的资源
+       driver：DAG的构建、Job的调度
+       ApplicationMaster: 负责executors的资源申请与管理
+  -2. 启动Driver（ApplicationMaster）
+  -3. Driver向资源管理器申请executors的资源
+    -a. 一台机器上可以运行多个executor ==> 一个NodeManager上可以运行多个executor
+  -4. executors执行启动
+  -5. RDD的构建
+  -6. RDD对应Job的执行
+  
+==================================================
+==================================================
+spark on yarn job history配置
+  http://spark.apache.org/docs/1.6.1/running-on-yarn.html ===> Debugging your Application
+  -1. 配置并启动spark的job history相关信息
+    http://bigdata-01.yushu.com:18080/
+  -2. 配置yarn-site.xml文件，然后重启yarn
+<property>
+  <name>yarn.log-aggregation-enable</name>
+  <value>true</value>
+</property>
+<property>
+  <name>yarn.log.server.url</name>
+  <value>http://bigdata-01.yushu.com:19888/jobhistory/job/</value>
+</property>
+  -3. 修改spark-defaults.conf内容
+spark.yarn.historyServer.address http://bigdata-01.yushu.com:18080
+

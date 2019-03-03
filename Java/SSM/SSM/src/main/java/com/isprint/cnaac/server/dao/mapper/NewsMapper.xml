@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.isprint.cnaac.server.dao.NewsMapper" >
+  <resultMap id="BaseResultMap" type="com.isprint.cnaac.server.domain.entity.News" >
+    <id column="uuid" property="uuid" jdbcType="VARCHAR" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="summary" property="summary" jdbcType="VARCHAR" />
+    <result column="author" property="author" jdbcType="VARCHAR" />
+    <result column="provenance" property="provenance" jdbcType="VARCHAR" />
+    <result column="pubtime" property="pubtime" jdbcType="TIMESTAMP" />
+    <result column="path" property="path" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="click_count" property="clickCount" jdbcType="INTEGER" />
+    <result column="summary_pic" property="summaryPic" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.isprint.cnaac.server.domain.entity.News" extends="BaseResultMap" >
+    <result column="contents" property="contents" jdbcType="LONGVARBINARY" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    uuid, title, summary, author, provenance, pubtime, path, create_time, update_time, 
+    create_by, update_by, type, click_count, summary_pic
+  </sql>
+  <sql id="Blob_Column_List" >
+    contents
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from news
+    where uuid = #{uuid,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from news
+    where uuid = #{uuid,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.isprint.cnaac.server.domain.entity.News" >
+    insert into news (uuid, title, summary, 
+      author, provenance, pubtime, 
+      path, create_time, update_time, 
+      create_by, update_by, type, 
+      click_count, summary_pic, contents
+      )
+    values (#{uuid,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR}, #{summary,jdbcType=VARCHAR}, 
+      #{author,jdbcType=VARCHAR}, #{provenance,jdbcType=VARCHAR}, #{pubtime,jdbcType=TIMESTAMP}, 
+      #{path,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{createBy,jdbcType=VARCHAR}, #{updateBy,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR}, 
+      #{clickCount,jdbcType=INTEGER}, #{summaryPic,jdbcType=VARCHAR}, #{contents,jdbcType=LONGVARBINARY}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.isprint.cnaac.server.domain.entity.News" >
+    insert into news
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="uuid != null" >
+        uuid,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="summary != null" >
+        summary,
+      </if>
+      <if test="author != null" >
+        author,
+      </if>
+      <if test="provenance != null" >
+        provenance,
+      </if>
+      <if test="pubtime != null" >
+        pubtime,
+      </if>
+      <if test="path != null" >
+        path,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="clickCount != null" >
+        click_count,
+      </if>
+      <if test="summaryPic != null" >
+        summary_pic,
+      </if>
+      <if test="contents != null" >
+        contents,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="uuid != null" >
+        #{uuid,jdbcType=VARCHAR},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="summary != null" >
+        #{summary,jdbcType=VARCHAR},
+      </if>
+      <if test="author != null" >
+        #{author,jdbcType=VARCHAR},
+      </if>
+      <if test="provenance != null" >
+        #{provenance,jdbcType=VARCHAR},
+      </if>
+      <if test="pubtime != null" >
+        #{pubtime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="path != null" >
+        #{path,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="clickCount != null" >
+        #{clickCount,jdbcType=INTEGER},
+      </if>
+      <if test="summaryPic != null" >
+        #{summaryPic,jdbcType=VARCHAR},
+      </if>
+      <if test="contents != null" >
+        #{contents,jdbcType=LONGVARBINARY},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.isprint.cnaac.server.domain.entity.News" >
+    update news
+    <set >
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="summary != null" >
+        summary = #{summary,jdbcType=VARCHAR},
+      </if>
+      <if test="author != null" >
+        author = #{author,jdbcType=VARCHAR},
+      </if>
+      <if test="provenance != null" >
+        provenance = #{provenance,jdbcType=VARCHAR},
+      </if>
+      <if test="pubtime != null" >
+        pubtime = #{pubtime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="path != null" >
+        path = #{path,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=VARCHAR},
+      </if>
+      <if test="clickCount != null" >
+        click_count = #{clickCount,jdbcType=INTEGER},
+      </if>
+      <if test="summaryPic != null" >
+        summary_pic = #{summaryPic,jdbcType=VARCHAR},
+      </if>
+      <if test="contents != null" >
+        contents = #{contents,jdbcType=LONGVARBINARY},
+      </if>
+    </set>
+    where uuid = #{uuid,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.isprint.cnaac.server.domain.entity.News" >
+    update news
+    set title = #{title,jdbcType=VARCHAR},
+      summary = #{summary,jdbcType=VARCHAR},
+      author = #{author,jdbcType=VARCHAR},
+      provenance = #{provenance,jdbcType=VARCHAR},
+      pubtime = #{pubtime,jdbcType=TIMESTAMP},
+      path = #{path,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      click_count = #{clickCount,jdbcType=INTEGER},
+      summary_pic = #{summaryPic,jdbcType=VARCHAR},
+      contents = #{contents,jdbcType=LONGVARBINARY}
+    where uuid = #{uuid,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.isprint.cnaac.server.domain.entity.News" >
+    update news
+    set title = #{title,jdbcType=VARCHAR},
+      summary = #{summary,jdbcType=VARCHAR},
+      author = #{author,jdbcType=VARCHAR},
+      provenance = #{provenance,jdbcType=VARCHAR},
+      pubtime = #{pubtime,jdbcType=TIMESTAMP},
+      path = #{path,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      type = #{type,jdbcType=VARCHAR},
+      click_count = #{clickCount,jdbcType=INTEGER},
+      summary_pic = #{summaryPic,jdbcType=VARCHAR}
+    where uuid = #{uuid,jdbcType=VARCHAR}
+  </update>
+  
+  <!-- 下面是非自动生成的语句 -->
+  <select id="selectPaginationListNews" resultMap="BaseResultMap">
+      select <include refid="Base_Column_List" />
+      from news where title like #{title}	 
+      order by create_time desc        
+  </select>
+  
+</mapper>

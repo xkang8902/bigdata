@@ -1,0 +1,102 @@
+ScalikeJDBC CURD
+    pom.xml
+        <!-- scalikejdbc_2.11 -->
+        <dependency>
+            <groupId>org.scalikejdbc</groupId>
+            <artifactId>scalikejdbc_2.11</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        
+        <!-- scalikejdbc-config_2.11 -->
+        <dependency>
+            <groupId>org.scalikejdbc</groupId>
+            <artifactId>scalikejdbc-config_2.11</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.38</version>
+        </dependency>
+
+    配置数据库信息
+        # MySQL example
+        db.default.driver="com.mysql.jdbc.Driver"
+        db.default.url="jdbc:mysql://localhost/bbs?characterEncoding=utf-8"
+        db.default.user="root"
+        db.default.password="123456"
+         
+        # db.sheep.driver="com.mysql.jdbc.Driver"
+        # db.sheep.url="jdbc:mysql://localhost/bbs"
+        # db.sheep.user="root"
+        # db.sheep.password="123456"
+
+    加载数据配置信息
+        // 加载数据库配置信息
+        // 默认加载db.default.*
+        DBs.setup()
+        // 加载db.sheep配置信息
+        DBs.setup('sheep)
+    
+    查询数据库并封装数据
+        DBs.setup()
+        // 查询数据并返回单个列, 并将列数据封装到集合中
+        val list: List[String] = DB readOnly { implicit session =>
+            sql"select content from post".map(rs => rs.string("content")).list().apply()
+        }
+        for (s <- list ) {
+            println(s)
+        }
+                 
+        /**
+          * 查询数据库,并将数据封装成对象,并返回一个集合
+          */
+        // 初始化数据库链接
+        // 用户实体
+        case class Users(id: String, name: String, nickName: String)
+        DBs.setup('sheep)
+        val userses: List[Users] = NamedDB('sheep) readOnly { implicit session =>
+            sql"SELECT * from users".map(rs => Users(rs.string("id"), rs.string("name"), rs.string("nickname"))).list().apply()
+        }
+        for (usr <- userses ) {
+            println(usr.nickName)
+        }
+    
+    插入数据
+        AutoCommit
+            /**
+              * 插入数据, 使用autoCommit
+              */
+            val insertResult: Int = DB.autoCommit { implicit session =>
+                SQL("insert into users(name, nickname) values(?,?)").bind("test01", "test01").update().apply()
+            }
+            println(insertResult)
+        插入返回主键标识
+            /**
+              * 插入数据, 并返回主键
+              */
+            val id: Long = DB.localTx(implicit session => {
+                sql"INSERT INTO users(name, nickname, sex) VALUES (?,?,?)".bind("测试", "000", 1).updateAndReturnGeneratedKey("nickname").apply()
+            })
+            println(id)
+        事务插入
+            /**
+              * 使用事务插入数据库
+              */
+            val tx: Int = DB.localTx { implicit session =>
+                sql"INSERT INTO users(name, nickname, sex) VALUES (?,?,?)".bind("犊子", "000", 1).update().apply()
+                // var s = 1 / 0
+                SQL("INSERT INTO users(name, nickname, sex) values(?,?,?)").bind("王八犊子", "xxx", 0).update().apply()
+            }
+            println(s"tx = ${tx}")
+
+    更新数据
+        /**
+          * 更新数据
+          */
+        DB.localTx{ implicit session =>
+            sql"UPDATE users SET pwd = ?".bind("88999").update().apply()
+        }
+
+

@@ -1,0 +1,87 @@
+SparkSQL操作：
+    -1. HQL/SQL开发
+        将DataFrame注册成为临时表
+        然后通过sqlContext.sql("sql语句")来进行操作
+    -2. DSL开发
+        直接通过操作DataFrame的API进行业务开发，类似RDD的操作
+        DataFrame数据输出：
+            -1. 将DataFrame转换为RDD然后进行数据输出 1、saveAS...  2、foreach.....
+            -2. 直接调用DataFrame的相关API进行数据输出
+                df.show()
+                df.collect()
+                df.write.#
+                df.#  
+
+
+SparkSQL应用的处理过程
+  -1. 数据读入形成DataFrame
+  -2. DataFrame数据操作，得到最终的DataFrame结果
+  -3. 最终的DataFrame结果数据输出
+  
+DataFrame内部实际上是一个逻辑计划
+  所有的数据执行都是一个lazy的操作
+  调用相关的API的时候，实质是在内部构建一个查询的逻辑计划，类似RDD的构建过程；只有当DataFrame被触发调用的时候(获取数据的操作)，才真正的执行
+
+=================DataFrame的read和write编程模式=================
+
+  https://spark-packages.org/
+  https://github.com/databricks
+  功能：通过SparkSQL内部定义的read和write数据读写入口进行数据的加载和保存操作
+  读取数据：
+    val df = sqlContext.read.####.load()
+  写出数据：
+    df.write.####.save()
+
+Read:
+  功能：读取外部数据源的数据，并形成DataFrame
+  相关函数说明：
+
+    format：给定读取数据源数据的格式是什么(那种什么形式读取数据)
+    schema: 给定数据的数据格式是什么，如果不给定，会自动进行推断
+    option：给定读取数据过程中所需要的相关参数
+    load：加载数据形成DataFrame（除了JDBC的数据源）
+    jdbc：加载RDBMs的数据形成DataFrame
+    table：加载表数据形成DataFrame
+
+    eg:sqlContext.read.format("parquet").load("/yushu/spark/sql/join").show
+
+三种不同jdbcAPI讲解：
+    def jdbc(url: String, table: String, properties: Properties): DataFrame
+      根据给定的url、table和连接信息读取对应表的数据，使用一个分区来读取数据
+    def jdbc(
+          url: String, 给定url连接信息
+          table: String, 给定从哪个表获取数据
+          columnName: String, 给定进行分区的分区字段
+          lowerBound: Long, 给定计算的下界
+          upperBound: Long, 给定计算的上界
+          numPartitions: Int, 给定分区数量
+          connectionProperties: Properties--连接信息
+     ): DataFrame
+    最终形成的DataFrame分区数量和参数numPartitions一致；要求分区字段是数值型的
+     step = (upperBound - lowerBound) / numPartitions
+     currentIndex = step + lowerBound ==> 第一个分区：(负无穷大，currentIndex)
+     preIndex = currentIndex
+     currentIndex += step ===> 第二个分区: [preIndex, currentIndex)
+     ........ ==> 直到分区数量为numPartitions - 1
+     得到最后一个分区: [currentIndex, 正无穷大)
+    def jdbc(
+          url: String,
+          table: String,
+          predicates: Array[String], 给定数据获取的where条件，最终的分区数量就是array中数据的个数
+          connectionProperties: Properties): DataFrame
+  
+Write：
+  功能：将DataFrame的数据写出到指定的目的地
+  相关函数说明：
+    mode：指定数据插入的策略(当数据插入的文件夹或者表存在的时候怎么做?)
+    case "overwrite" => SaveMode.Overwrite: 覆盖(原来的删除，然后插入)
+          case "append" => SaveMode.Append: 追加
+          case "ignore" => SaveMode.Ignore: 不进行插入操作
+          case "error" | "default" => SaveMode.ErrorIfExists: 报错
+   format：给定数据存储时候的数据格式
+   option：给定存储过程中所使用到的相关参数
+   partitionBy：给定hive表数据存储的时候，分区字段是那个
+   save：触发数据保存操作
+   insertInto：插入到一张已经存在的hive表中
+   saveAsTable：将DataFrame的数据保存到一张hive表中
+   jdbc：将数据写入到RDBMs中

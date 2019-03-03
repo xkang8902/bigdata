@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       http://www.springframework.org/schema/mvc
+       http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd">
+
+    <!-- annotation-mapping auto sign bean -->
+	<mvc:annotation-driven validator="validator"/>
+	<!-- auto scan the package -->
+	<context:component-scan base-package="com.isprint.cnaac.server.controller" />
+	
+	<bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean">
+            <property name="providerClass" value="org.hibernate.validator.HibernateValidator" />
+            <!--property name="validationMessageSource" ref="messageSource" /-->
+    </bean>
+
+	<bean id="mappingJacksonHttpMessageConverter"
+		class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<value>text/html;charset=UTF-8</value>
+			</list>
+		</property>
+	</bean>
+		
+	<bean	class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<ref bean="mappingJacksonHttpMessageConverter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/pages/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+	<!-- Exception Resolver  
+	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+	    <property name="defaultErrorView">
+	        <value>/errorPages/defaultError</value>
+	    </property>
+	    <property name="warnLogCategory">
+	        <value>org.springframework.web.servlet.handler.SimpleMappingExceptionResolver</value>
+	    </property>
+	</bean>
+	-->
+	<!-- static file request -->
+	<mvc:resources location="/WEB-INF/static/" mapping="/static/**"/>
+	<mvc:resources location="/upload/" mapping="/upload/**"/>
+	
+	<!-- i18n handle begin -->
+	
+	<bean id="messageSource"
+        class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basename" value="classpath:i18n/message" />
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
+
+    <bean id="localeChangeInterceptor"
+        class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+        <property name="paramName" value="lang" />
+    </bean>
+
+    <bean id="localeResolver"
+        class="org.springframework.web.servlet.i18n.CookieLocaleResolver">
+        <property name="defaultLocale" value="zh_CN"/>
+    </bean>
+
+    <bean id="handlerMapping"
+        class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping">
+        <property name="interceptors">
+            <ref bean="localeChangeInterceptor" />
+        </property>
+    </bean>
+    
+    <mvc:interceptors>
+        <bean 
+            class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+        <property name="paramName" value="lang" />
+    </bean>
+    </mvc:interceptors>
+    
+    <mvc:interceptors>
+        <mvc:interceptor> 
+            <mvc:mapping path="/**" />
+             <mvc:exclude-mapping path="/static/**" />
+             <mvc:exclude-mapping path="/upload/**" />
+             <mvc:exclude-mapping path="/login" /> 
+             <mvc:exclude-mapping path="/error/**" />           
+            <bean class="com.isprint.cnaac.server.filter.SessionIntecepter" />
+        </mvc:interceptor>      
+     </mvc:interceptors>
+    
+	<!-- i18n handle end    -->
+	
+</beans>

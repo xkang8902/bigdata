@@ -1,0 +1,45 @@
+Java生产环境中应该配置的一些jvm参数
+java 应用程序部署在服务器上，应该具备一些基本的参数。下面分jdk1.8之前，以及 1.8之后分别列出来。以供以后参考
+
+-server
+    -Xms<heap size>[g|m|k] -Xmx<heap size>[g|m|k]
+    -XX:PermSize=<perm gen size>[g|m|k] -XX:MaxPermSize=<perm gen size>[g|m|k]
+    -Xmn<young size>[g|m|k]
+    -XX:SurvivorRatio=<ratio>
+    -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled
+    -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=<percent>
+    -XX:+ScavengeBeforeFullGC -XX:+CMSScavengeBeforeRemark
+    -XX:+PrintGCDateStamps -verbose:gc -XX:+PrintGCDetails -Xloggc:"<path to log>"
+    -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=100M
+    -Dsun.net.inetaddr.ttl=<TTL in seconds>
+    -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<path to dump>`date`.hprof
+    -Djava.rmi.server.hostname=<external IP>
+    -Dcom.sun.management.jmxremote.port=<port> 
+    -Dcom.sun.management.jmxremote.authenticate=false 
+    -Dcom.sun.management.jmxremote.ssl=false
+
+
+jdk 1.8 之后的参数:
+
+-server
+    -Xms<heap size>[g|m|k] -Xmx<heap size>[g|m|k]
+    -XX:MaxMetaspaceSize=<metaspace size>[g|m|k]
+    -Xmn<young size>[g|m|k]
+    -XX:SurvivorRatio=<ratio>
+    -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled
+    -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=<percent>
+    -XX:+ScavengeBeforeFullGC -XX:+CMSScavengeBeforeRemark
+    -XX:+PrintGCDateStamps -verbose:gc -XX:+PrintGCDetails -Xloggc:"<path to log>"
+    -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=100M
+    -Dsun.net.inetaddr.ttl=<TTL in seconds>
+    -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<path to dump>`date`.hprof
+    -Djava.rmi.server.hostname=<external IP>
+    -Dcom.sun.management.jmxremote.port=<port> 
+    -Dcom.sun.management.jmxremote.authenticate=false 
+    -Dcom.sun.management.jmxremote.ssl=false
+
+
+里面最为特殊的，就是让JMX也可以工作，因为方便以后visualVM等远程连接操作。
+请问这个设置 是设置到哪个文件里？是写到 tomact的配置文件吗？
+    TOMCAT也可以，OPT里面，命令行也可以。
+    java -jar ....  参数。

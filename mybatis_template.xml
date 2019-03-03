@@ -1,0 +1,259 @@
+简单的mybatis增删改查模板：
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+    <mapper namespace="com.suneee.scn.chtpub.wms.dao.UserDao">
+        
+        <select id="queryPage" resultType="com.suneee.scn.chtpub.wms.model.UserDO" parameterType="java.util.Map">
+            
+            SELECT
+                    id as id,
+                    whid as whid,
+                    userid as userid,
+                    usercode as usercode,
+                    department as department
+            FROM
+                    sp_users
+            WHERE
+                    1 = 1
+            <if test="whid !=null  and whid != '' ">
+                AND whid = #{whid,jdbcType=VARCHAR}
+            </if>
+
+            <if test="userid !=null  and userid != '' ">
+                AND userid = #{userid,jdbcType=VARCHAR}
+            </if>
+            <if test="usercode !=null  and usercode != '' ">
+                AND usercode = #{usercode,jdbcType=VARCHAR}
+            </if>
+
+            <if test="department !=null  and department != '' ">
+                AND department = #{department,jdbcType=VARCHAR}
+            </if>
+                
+            limit #{pageSize,jdbcType=NUMERIC} offset #{start,jdbcType=NUMERIC}
+        </select>
+        
+        
+        <select id="getModelTotal" resultType="int" parameterType="java.util.Map">
+            
+            SELECT
+                    count(1)
+            FROM
+                    sp_users
+            WHERE
+                    1 = 1
+            <if test="whid !=null  and whid != '' ">
+                AND whid = #{whid,jdbcType=VARCHAR}
+            </if>
+
+            <if test="userid !=null  and userid != '' ">
+                AND userid = #{userid,jdbcType=VARCHAR}
+            </if>
+            <if test="usercode !=null  and usercode != '' ">
+                AND usercode = #{usercode,jdbcType=VARCHAR}
+            </if>
+
+            <if test="department !=null  and department != '' ">
+                AND department = #{department,jdbcType=VARCHAR}
+            </if>
+        </select>
+
+
+        <select id="checkListIfExist" resultType="com.suneee.scn.chtpub.wms.model.UserDO" parameterType="java.util.Map">
+
+            SELECT
+                    usercode as usercode
+            FROM 
+                    sp_users
+            WHERE 
+                    1=1
+            <if test="usercode !=null  and usercode != '' ">
+                AND usercode = #{usercode,jdbcType=VARCHAR}
+            </if>
+        </select>
+        
+        
+        <insert id="insertModel" parameterType="java.util.Map">
+
+            INSERT INTO sp_users
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="whid != null and whid != '' ">
+                    whid,
+                </if>
+                <if test="userid != null and userid != '' ">
+                    userid,
+                </if>
+                <if test="usercode != null and usercode != '' ">
+                    usercode,
+                </if>
+                <if test="department != null and department != '' ">
+                    department,
+                </if>
+
+            </trim>
+            <trim prefix="values (" suffix=")" suffixOverrides=",">
+            
+                <if test="whid != null and whid != '' ">
+                    #{whid,jdbcType=VARCHAR},
+                </if>
+                <if test="userid != null and userid != '' ">
+                    #{userid,jdbcType=VARCHAR},
+                </if>
+                <if test="usercode != null and usercode != '' ">
+                    #{usercode,jdbcType=VARCHAR},
+                </if>
+                <if test="department != null and department != '' ">
+                    #{department,jdbcType=VARCHAR},
+                </if>
+
+            </trim>
+        </insert>
+        
+        
+        <delete id="deleteModel" parameterType="java.lang.Integer">
+            DELETE FROM 
+                sp_users
+            WHERE 
+                id = #{id,jdbcType=NUMERIC}
+        </delete>
+                
+        <select id="initQuery" parameterType="java.lang.Integer" resultType="com.suneee.scn.chtpub.wms.model.UserDO">
+            SELECT
+                    id,
+                    whid,
+                    userid,
+                    usercode,
+                    department
+            FROM
+                    sp_users 
+            WHERE
+                    1 = 1
+            AND    id = #{id,jdbcType=NUMERIC}
+            
+        </select>
+    
+         <update id="updateModel" parameterType="java.util.Map">
+            UPDATE 
+                    sp_users
+            SET 
+                    whid = #{whid,jdbcType=VARCHAR},
+                    <!-- userid = #{userid,jdbcType=VARCHAR}, -->
+                    usercode = #{usercode,jdbcType=VARCHAR},
+                    department = #{department,jdbcType=VARCHAR}
+                    
+            WHERE 
+                    1=1
+            AND    
+                    id = #{id,jdbcType=NUMERIC}
+
+        </update>
+
+    </mapper>
+
+简单的单表CRUD，parameterType和resultType都可以用实体Model代替，自动映射。
+复杂多表的CRUD，parameterType要用map，在service里面要设置好对应的map K-V值，result一般用自定义的映射resultMap，里面定义了不同表字段对应的一个大Bean的映射，这里不能用resultType了！例如：
+
+    <resultMap id="BaseResultMap" type="com.suneee.scn.chtpub.wms.model.SuppCargoDO">
+            <id column="workqid" property="workqid" jdbcType="VARCHAR" />
+            <result column="description" property="description" jdbcType="VARCHAR" />
+            <result column="itemnumber" property="itemnumber" jdbcType="VARCHAR" />
+            <result column="whid" property="whid" jdbcType="VARCHAR" />
+            <result column="locationid" property="locationid" jdbcType="VARCHAR" />
+            <result column="workstatus" property="workstatus" jdbcType="VARCHAR" />
+            <result column="qty" property="qty" jdbcType="NUMERIC" />
+            <result column="zone" property="zone" jdbcType="VARCHAR" />
+            <result column="employeeid" property="employeeid" jdbcType="VARCHAR" />
+            <result column="datedue" property="datedue" jdbcType="VARCHAR" />
+    </resultMap>
+
+service层的代码：
+    package com.suneee.scn.chtpub.wms.service;
+
+    import java.util.HashMap;
+    import java.util.List;
+    import java.util.Map;
+
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.stereotype.Service;
+
+    import com.alibaba.dubbo.common.json.JSONObject;
+    import com.suneee.scn.chtpub.wms.common.util.DictUtil;
+    import com.suneee.scn.chtpub.wms.common.util.Page;
+    import com.suneee.scn.chtpub.wms.dao.UserDao;
+    import com.suneee.scn.chtpub.wms.model.DictionaryDO;
+    import com.suneee.scn.chtpub.wms.model.UserDO;
+    import com.suneee.scn.chtpub.wms.model.UserSearchDTO;
+
+    @Service("userService")
+    public class UserService {
+
+        @Autowired
+        UserDao userDao;
+
+        public int updateModel(UserDO bean) {
+            Map<String,Object> reqMap = new HashMap<String, Object>();
+            reqMap.put("id",bean.getId());
+            reqMap.put("whid",bean.getWhid());
+            // reqMap.put("userid",bean.getUserid());
+            reqMap.put("usercode",bean.getUsercode());
+            reqMap.put("department",bean.getDepartment());
+            int result = userDao.updateModel(reqMap);
+            return result;
+        }
+
+        public UserDO initQuery(int id) {
+            return userDao.initQuery(id);
+        }
+
+        public void deleteModel(Integer id) {
+            Map<String, Object> reqMap = new HashMap<String, Object>();        
+            reqMap.put("id",id);
+            userDao.deleteModel(reqMap);    
+        }
+
+        public int insertModel(UserDO bean) {
+            Map<String, Object> reqMap = new HashMap<String, Object>();    
+            reqMap.put("whid",bean.getWhid());
+            reqMap.put("userid",bean.getUserid());
+            reqMap.put("usercode",bean.getUsercode());
+            reqMap.put("department",bean.getDepartment());
+
+            return userDao.insertModel(reqMap);
+        }
+
+        public List<UserDO> checkListIfExist(JSONObject reqJson) {
+            Map<String, Object> reqMap = new HashMap<String, Object>();
+            String checkcode = reqJson.getString(DictUtil.User_ID);
+
+            reqMap.put("usercode", checkcode);
+            return userDao.checkListIfExist(reqMap);
+        }
+
+        public Page<UserDO> queryPage(Page<UserDO> page, UserSearchDTO bean) {
+            int pageNo = page.getPageNo();
+            int pageSize = page.getPageSize(); // 页大小
+            int start = (pageNo -1)*pageSize;
+            
+        Map<String,Object> reqMap = new HashMap<String, Object>();
+        
+            reqMap.put("start", start);
+            reqMap.put("pageSize", pageSize);
+            
+            reqMap.put("whid",bean.getWhid());
+            reqMap.put("userid",bean.getUserid());
+            reqMap.put("usercode",bean.getUsercode());
+            reqMap.put("department",bean.getDepartment());
+            
+            List<UserDO> listIfExist = userDao.queryPage(reqMap);
+            
+            page.setResults(listIfExist);
+            
+            int totalCount = userDao.getModelTotal(reqMap);
+            
+            page.setTotalCount(totalCount); // 总条数
+            int totalPageCount =totalCount%pageSize==0?totalCount/pageSize:totalCount/pageSize+1;
+            page.setPageCount(totalPageCount);
+            return page;
+            
+        }
+    }

@@ -1,0 +1,179 @@
+技能：
+    hadoop:
+        mapreduce:
+        优化：
+    mysql:
+        关联查询子查询：
+        聚合统计：
+        窗口分析：
+    hive：
+        数仓建模：
+        hivesql:
+            关联查询子查询：
+            聚合统计：
+            窗口分析：
+        优化：
+    storm：
+
+    spark：
+        spark core：
+            算子：
+                单元素  
+                pairRDD
+                    关联：
+                    分组：
+                    聚合：
+                    排序：
+        sparksql:
+            dataframe:
+                Row:
+                Cass Class:
+
+        sparkstreaming:
+            RDD计算：
+            状态计算：
+            窗口分析：
+        优化：
+    算法：
+    Java：
+        Java内存模型(并发控制)是围绕着在并发过程中如何处理原子性、可见性和有序性这三个特征来建立的
+        多线程：执行控制  指令重排  主存可见性（所谓不可见，是指一个线程对共享变量的修改不能及时地被其他线程看到）
+            JMM对共享内存(此处非内存)的操作做出了如下两条规定：
+            线程对共享内存的所有操作都必须在自己的工作内存中进行，不能直接从主内存中读写；
+            不同线程无法直接访问其他线程工作内存中的变量，因此共享变量的值传递需要通过主内存完成。
+            导致共享变量在进程间不可见的原因有以下几个：
+                指令重排序 & 线程交叉执行
+                共享变量更新后的值没有在工作内存和主内存间及时更新
+            synchronized可见性规范：
+                线程解锁前必须把共享变量的最新值刷新到主内存中
+                线程加锁时，将清空工作内存中共享变量的值，从而需要从主内存中重新读取最新值。
+            volatile可见性规范：
+                对volatile变量执行写操作时，会在写操作后加入一条store写屏障指令，强制将缓存刷新到主内存中
+                对volatile变量执行读操作时，会在读操作前加入一条load读屏障指令，强制使缓冲区缓存失效，所以会从主内存读取最新值。
+                防止指令重排序。
+            volatile：禁止指令重排(对volatile变量写之前的指令和之后的指令禁止重排)  主存可见性(对volatile变量修改完后马上从CPU缓存刷新到主存)
+                案例：
+                class MyThread extends Thread {           
+                    private volatile boolean isStop = false;        
+                    public void run() {    
+                        while (!isStop) {    
+                            System.out.println("do something");    
+                        }    
+                    }    
+                    public void setStop() {    
+                        isStop = true;    
+                    }          
+                } 
+                //线程1:
+                context = loadContext();   //语句1  context初始化操作
+                inited = true;             //语句2
+                
+                //线程2:
+                while(!inited ){
+                sleep()
+                }
+                doSomethingwithconfig(context);
+                因为指令重排序，有可能语句2会在语句1之前执行，可能导致context还没被初始化，而线程2中就使用未初始化的context去进行操作，导致程序出错。这里如果用volatile关键字对inited变量进行修饰，就不会出现这种问题了。
+
+            synchronized:执行控制(多个线程的代码块按顺序执行) 主存可见性(释放锁之前刷新到主存)
+                必须使用synchronized而不能使用volatile的场景
+
+                public class Test {
+                    public volatile int inc = 0;
+                    public void increase() {
+                        inc++;
+                    }
+                    
+                    public static void main(String[] args) {
+                        final Test test = new Test();
+                        for(int i=0;i<10;i++){
+                            new Thread(){
+                                public void run() {
+                                    for(int j=0;j<1000;j++)
+                                        test.increase();
+                                };
+                            }.start();
+                        }
+                        
+                        while(Thread.activeCount()>1)  //保证前面的线程都执行完
+                            Thread.yield();
+                        System.out.println(test.inc);
+                    }
+                }
+
+                public  int inc = 0;
+                public synchronized void increase() {
+                        inc++;
+                }
+            static:类 成员变量 方法
+                类：
+                    修饰类后此类不能进行实例化（由jvm检查类的类信息中的modifier控制的）并且修饰类时只能修饰内部类，修饰外部类会报错
+                    静态内部类中成员默认都是静态的（因为不能创建对象，所以所有的东西都是归类所有），
+                    且静态方法中只能访问外部类的静态成员（静态变量和静态方法）（因为静态类访问外部类资源的时候外部类还没有创建对象，实例方法参数内部会有一个指向实例的隐藏参数）。
+                    类的初始化和对象的初始化：
+                        类的初始化：在加载类的时候对属于类的成员进行初始化。
+                            如果是外部类的类初始化：使用的是静态代码块（静态代码块只执行一次，常用于外部配置文件的加载）
+                                静态代码块：类加载时自动执行
+                                构造代码块：类加载完毕，new对象时执行，没new一个对象都执行一次且优于构造函数执行，作用于构造函数相同，编译期在编译时会把此部分代码放在每个构造函数代码的前面。他的设计思想是将多个构造函数中的相同部分抽出来进行代码的复用，仅此而已。应用场景可以使用它来统计对象创建的次数。
+                                构造函数：构造函数必须通过new来调用。作用是初始化对象的状态。
+                            如果是静态内部类初始化：使用的是构造方法。
+                        对象初始化：是在类初始化完毕，在堆中分配空间并拷贝数据的过程。
+                        类初始化：Inner i = Outer.Inner(“abc”)  初始化的类后所有的数据存储于方法区
+                        对象初始化：Inner i = new Outer().new Inner("abc")   对象初始化实际上是堆上分配空间的过程，然后将方法区常量池中的数据拷到堆。
+                        静态内部类的使用案例：
+                            public class Outer {
+                                private String name;
+                                private int age;
+                                public static class Builder {
+                                    private String name;
+                                    private int age;
+                                    public Builder(int age) {
+                                        this.age = age;
+                                    }
+                                    public Builder withName(String name) {
+                                        this.name = name;
+                                        return this;
+                                    }
+                                    public Builder withAge(int age) {
+                                        this.age = age;
+                                        return this;
+                                    }
+                                    public Outer build() {
+                                        return new Outer(this);
+                                    }
+                                }
+                                private Outer(Builder b) {  //外部类构造函数私有 只能通过内部类构造，
+                                    this.age = b.age;
+                                    this.name = b.name;
+                                }
+                            }
+                            Outer outer = Outer.Builder(2).withName("Yang Liu").build();//链式编程，对一个初始化比较复杂的类可以采用静态内部类来构造。事实上这是建造者模式的应用
+                        1    
+                成员变量：
+                方法：
+            final:类 实例变量 类变量 局部变量（方法内的变量）方法 
+
+            
+        多线程方法：
+            interrupt：
+            join：
+            yield:
+        int和Integer --->装箱和拆箱
+            int一般使用在参数传递  数值的运算  存储在栈中
+            integer一般是想使用对象的方法   存储在堆中
+        String和new String
+        JMM
+            实例变量存在于所属的对象中，因此在创建对象后才存在，存在于堆上；
+            如果为局部变量，局部变量是被声明在方法中的，它是暂时的，且生命周期只限于方法被放于栈上的这段期间（方法调用至执行完毕），因此存在于栈上；
+            Java栈：
+                Java栈驻留于常规RAM（随机访问存储器）区域，很小，特点是存取速度很快，仅次于寄存器。每个线程包含一个栈区，栈中只保存基础数据类型的对象和自定义对象的引用(不是对象)，对象都存放在堆区中。
+                栈分为3个部分：基本数据类型的变量区、执行环境上下文、操作指令区(存放操作指令)。
+                栈存储局部变量表，操作，方法出口等与方法执行相关的信息
+            Java堆：
+                RAM（随机存取存储器 ）区域
+                jvm只有一个堆区(heap)被所有线程共享，堆中不存放基本类型和对象引用，只存放对象本身 
+            
+            方法区: 
+                又叫静态区，跟堆一样，被所有的线程共享。存放所有的①类的元数据（class），②静态变量（static变量），③静态方法，④常量和⑤成员方法。
+                方法区中存放的都是在整个程序中永远唯一的元素。这也是方法区被所有的线程共享的原因。
+                Java里面是没有静态变量这个概念的，不信你自己在某个成员方法里面定义一个static int i = 0；Java里只有静态成员变量。它属于类的属性。

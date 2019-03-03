@@ -1,0 +1,68 @@
+private ForkJoinPool(int parallelism,
+                     ForkJoinWorkerThreadFactory factory,
+                     UncaughtExceptionHandler handler,
+                     int mode,
+                     String workerNamePrefix) {
+    this.workerNamePrefix = workerNamePrefix;
+    this.factory = factory;
+    this.ueh = handler;
+    this.config = (parallelism & SMASK) | mode;
+    long np = (long)(-parallelism); // offset ctl counts
+    this.ctl = ((np << AC_SHIFT) & AC_MASK) | ((np << TC_SHIFT) & TC_MASK);
+}
+    parallelism：默认是cpu核心数，ForkJoinPool里线程数量依据于它，但不表示最大线程数，不要等同于ThreadPoolExecutor里的corePoolSize或者maximumPoolSize。
+    factory：是线程工厂，不是新东西了，默认实现是DefaultForkJoinWorkerThreadFactory。workerNamePrefix是其中线程名称的前缀，默认使用“ForkJoinPool-*”
+    config：保存不变的参数，包括了parallelism和mode，供后续读取。mode可选FIFO_QUEUE和LIFO_QUEUE，默认是LIFO_QUEUE，具体用哪种，就要看业务。
+    ctl：是ForkJoinPool中最重要的控制字段，将下面信息按16bit为一组封装在一个long中。
+        AC: 活动的worker数量；
+        TC: 总共的worker数量；
+        SS: WorkQueue状态，第一位表示active的还是inactive，其余十五位表示版本号(对付ABA)；
+        ID:  这里保存了一个WorkQueue在WorkQueue[]的下标，和其他worker通过字段stackPred组成一个TreiberStack。后文讲的栈顶，指这里下标所在的WorkQueue。
+        AC和TC初始化时取的是parallelism负数，后续代码可以直接判断正负，为负代表还没有达到目标数量。另外ctl低32位有个技巧可以直接用sp=(int)ctl取得，为负代表存在空闲worker。
+    TreiberStack：这个栈的pull和pop使用了CAS，所以支持并发下的无锁操作。
+    runState: 线程池缺不了状态的变化，记录字段是runState
+        STARTED
+        STOP
+        TERMINATED
+        SHUTDOWN
+        RSLOCK
+        RSIGNAL
+        除了SHUTDOWN是负数，其他都是正数。前面四种不用说了，线程池标准状态流转。在多线程环境修改runState，不能简单想改就改，需要先获取锁，RSLOCK和RSIGNAL就用在这里。
+ForkJoinPool里有三个重要的角色：
+    ForkJoinWorkerThread：包装Thread；
+    WorkQueue：任务队列，双向；
+        ForkJoinPool使用数组保存所有WorkQueue，每个worker有属于自己的WorkQueue，但不是每个WorkQueue都有对应的worker。
+            没有worker的WorkQueue：保存的是submission，来自外部提交，在WorkQueue[]的下标是偶数；
+            属于worker的WorkQueue：保存的是task，在WorkQueue[]的下标是奇数。
+        WorkQueue是一个双端队列，同时支持LIFO(last-in-first-out)的push和pop操作，和FIFO(first-in-first-out)的poll操作，分别操作top端和base端。worker操作自己的WorkQueue是LIFO操作(可选FIFO)，除此之外，worker会尝试steal其他WorkQueue里的任务，这个时候执行的是FIFO操作。
+            分开两端取任务的好处：
+                LIFO操作只有对应的worker才能执行，push和pop不需要考虑并发；
+                拆分时，越大的任务越在WorkQueue的base端，尽早分解，能够尽快进入计算。
+        scanState:
+            scanState描述WorkQueue当前状态：
+                偶数表示RUNNING
+                奇数表示SCANNING
+                负数表示inactive
+        stackPred:
+            stackPred是WorkQueue组成TreiberStack时，保存前者的字段。
+        volatile int base; int top;
+            base和top分别指向WorkQueue的两端，小小区别是base带上了volatile，回答了对top端push和pop不需要考虑并发这个优点。
+        qlock：操作WorkQueue前需要锁定，记录在字段qlock：
+            1：锁定；
+            0：未锁定；
+            负数：对应的worker已经撤销注册，WorkQueue也就终止使用。
+        config:
+            WorkQueue也有config，不要和ForkJoinPool的config混淆了。WorkQueue的config记录了在WorkQueue[]的下标和当前mode。
+    ForkJoinTask：worker执行的对象，实现了Future。两种类型，一种叫submission，另一种就叫task。
+        ForkJoinTask里很重要的字段是它的状态status，默认是0，当得出结果时变更为负数，有三种结果：
+            NORMAL
+            CANCELLED
+            EXCEPTIONAL
+            除此之外，在得出结果之前，任务状态能够被设置为SIGNAL，表示有线程等待这个任务的结果，执行完成后需要notify通知，具体看后文的join。
+
+
+
+
+
+
+

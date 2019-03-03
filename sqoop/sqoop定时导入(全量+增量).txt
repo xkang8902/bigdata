@@ -1,0 +1,61 @@
+sqoop定时导入(全量+增量)sqlserver数据到HDFS
+
+增量导入采用创建sqoop job的形式,定时加载job即可
+
+    创建job
+    bin/sqoop job \
+    --create s_ods_ol_user_app \
+    -- import \
+    --connect 'jdbc:sqlserver://10.31.24.236:1433;database=ODS_DB_V3' \
+    --username 'dss' \
+    --password '1234QWER!@#$' \
+    --table 'ods_ol_user_app' \
+    --target-dir /sqoopresult/ODS_DB_V3/ods_ol_user_app \
+    --incremental append  \
+    --check-column SequenceNO  \
+    --last-value 23637191 \
+    --m 1
+
+    执行job
+    sqoop job --exec s_ods_ol_user_app
+
+    显示job信息
+    sqoop job --show s_ods_ol_user_app
+
+    删除job
+    sqoop job --delete s_ods_ol_user_app
+
+    配置定时
+    crontab -e
+    0 */1 * * *  /usr/hdp/2.6.3.0-235/sqoop/bin/sqoop job \
+    --exec s_ods_ol_user_app > s_ods_ol_user_app.out 2>&1 &
+    2>&1 &的意思是后台静默执行
+
+全量定时采用shell脚本
+    vi import_ODS.sh
+    # !/bin/bash
+    ​
+    #删除之前的内容
+    ​
+    hadoop fs -rm -r /sqoopresult/ODS_DB_V3/ods_btp_supplier
+    hadoop fs -rm -r /sqoopresult/ODS_DB_V3/ods_btp_Commodity_discount_info
+    ​
+    #重新导入命令
+    ​
+    /usr/hdp/2.6.3.0-235/sqoop/bin/sqoop import \
+    --connect 'jdbc:sqlserver://10.31.24.236:1433;database=ODS_DB_V3' \
+    --username 'dss' \
+    --password '1234QWER!@#$' \
+    --table 'ods_btp_supplier' \
+    --target-dir /sqoopresult/ODS_DB_V3/ods_btp_supplier \
+    --m 1
+    ​
+    /usr/hdp/2.6.3.0-235/sqoop/bin/sqoop import \
+    --connect 'jdbc:sqlserver://10.31.24.236:1433;database=ODS_DB_V3' \
+    --username 'dss' \
+    --password '1234QWER!@#$' \
+    --table 'ods_btp_Commodity_discount_info' \
+    --target-dir /sqoopresult/ODS_DB_V3/ods_btp_Commodity_discount_info \
+    --m 1
+    配置定时
+    0 0 * * */usr/hdp/2.6.3.0-235/sqoop/import_ODS.sh > /usr/hdp/2.6.3.0-235/sqoop/data/sqoop_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1

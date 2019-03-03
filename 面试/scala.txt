@@ -1,0 +1,56 @@
+scala:
+
+class:
+    class Person private(val name: String, private val age: Int) extends Animal with Speak with Listen{
+        
+        var userId: Int = _
+        val f1 = (...)=>{...}   //此处不加返回值类型
+
+        def this(val userId: Int, val name: String, val age: Int){
+            this(name, age)
+            this.userId = userId
+        }
+        ...
+        def methodN(...): Unit = {
+            ...
+        }
+    }
+
+    class 不写val/var  则默认为private val    如果写了就为public val/var  也就是说private还是public跟你写不写val/var有关。
+    class默认的初始化参数列表中的参数 如果成员方法中使用了会自动升级为成员字段；否则也只是参数而已；一般情况下是肯定会使用的。
+    
+    case class Person(val name: String, var age: Int, private var userId: Int,gender: String)  javabean
+    case class  不写val/var  则默认为public val   如果写了就为public val/var   也就是说private还是public需要自己显式定义，如果不写private则都是public的。
+    case class 会默认生成一个apply方法   apply方法是一个工厂方法 一般通过他来通过object来构造class对象。
+
+object:
+    object Person{
+        val CONSTANT_VALUE1 = "A"   //类型自动推倒
+        var CONSTANT_VALUE2 = "B"
+        def apply(name: String, age: Int): Person = {new Person(name, age)}
+        def methodN(p: Person){println(p.age)}
+
+    }
+
+    object有两个特征: 静态成员   单例(object默认会被编译成两个class，一个class中含有一个私有的构造和一个静态的该类对象实例常量来实现单例特性，另一个类是对单例类的静态包装也就是说是将单例类的成员方法进行静态包装来实现静态特性)
+
+trait:
+    trait Speak{
+        val CONSTANT_VALUE1 = "A"  //类型自动推倒
+        val name: String   //抽象字段
+        lazy val f1 = println(s"hello ${name}")      //懒加载避免空指针的情况
+        def method1(name: String, age: Int): Unit    //抽象方法      
+        def methodN(v1: String, v2: Int): Unit =>{println("hello world!")}    //具体方法
+    }
+    class Person
+    trait FileLogger extends Logger
+    class Student extends Person with FileLogger with Cloneable
+    上述构造器的执行顺序为:
+    1 首先调用父类Person的构造器
+    2 调用父trait Logger的构造器
+    3 再调用trait FileLogger构造器，再然后调用Cloneable的构造器
+    4 最后才调用Student的构造器
+
+    trait会根据不同的成员编译成不同的类 当成员方法全部为抽象的时候会编译成interface  当含有非抽象方法的时候会编译成abstract class
+    trait与abstract class 区别: 1.trait 没有带参构造函数 2.trait可以通过with实现多继承。 
+    当定义全局常量时，使用object   trait使用在多继承的场合。

@@ -1,0 +1,538 @@
+sql:
+    select:
+        where:
+            SELECT * FROM Websites WHERE country='CN';
+            SELECT * FROM Websites WHERE id=1;
+            WHERE 子句中的运算符
+                =	等于
+                <>	不等于。注释：在 SQL 的一些版本中，该操作符可被写成 !=
+                >	大于
+                <	小于
+                >=	大于等于
+                <=	小于等于
+            WHERE 子句中逻辑运算
+                And:与 同时满足两个条件的值。Select * from emp where sal > 2000 and sal < 3000;
+                Or:或 满足其中一个条件的值  Select * from emp where sal > 2000 or comm > 500;
+                Not:非 满足不包含该条件的值。   select * from emp where not sal > 1500;
+                逻辑运算的优先级:  ()    not        and         or
+            特殊条件
+                1.空值判断： is (not) null
+                    Select * from emp where comm is null;
+                    null函数：ISNULL()、NVL()、IFNULL() 和 COALESCE() 函数
+                        SELECT ProductName,UnitPrice*(UnitsInStock+UnitsOnOrder)FROM Products 如果有 "UnitsOnOrder" 值是 NULL，那么结果是 NULL。
+                        SQL Server / MS Access
+                            SELECT ProductName,UnitPrice*(UnitsInStock+ISNULL(UnitsOnOrder,0))FROM Products
+                        Oracle
+                            Oracle 没有 ISNULL() 函数。不过，我们可以使用 NVL() 函数达到相同的结果：
+                            SELECT ProductName,UnitPrice*(UnitsInStock+NVL(UnitsOnOrder,0))FROM Products MySQL
+                        MySQL 也拥有类似 ISNULL() 的函数。不过它的工作方式与微软的 ISNULL() 函数有点不同。
+                            在 MySQL 中，我们可以使用 IFNULL() 函数，如下所示：
+                            SELECT ProductName,UnitPrice*(UnitsInStock+IFNULL(UnitsOnOrder,0))FROM Products
+                            或者我们可以使用 COALESCE() 函数，如下所示：
+                            SELECT ProductName,UnitPrice*(UnitsInStock+COALESCE(UnitsOnOrder,0))FROM Products
+                2.between and (在 之间的值)
+                    Select * from emp where sal between 1500 and 3000;
+                    注意：大于等于 1500 且小于等于 3000， 1500 为下限，3000 为上限，下限在前，上限在后，查询的范围包涵有上下限的值。
+                3.In  Select * from emp where sal in (5000,3000,1500);
+                4.like   Select * from emp where ename like '%M%';
+                    查询 EMP 表中 Ename 列中有 M 的值，M 为要查询内容中的模糊信息。
+                    select * from username where 用户名 like '段\_%' escape '\'   -- 通过 \转义,只能查出来 段_煜
+                    % 表示多个字值，_ 下划线表示一个字符；
+                    M% : 为能配符，正则表达式，表示的意思为模糊查询信息为 M 开头的。
+                    %M% : 表示查询包含M的所有内容。
+                    %M_ : 表示查询以M在倒数第二位的所有内容。
+                5.正则表达式
+                    MySQL 中使用 REGEXP 或 NOT REGEXP 运算符 (或 RLIKE 和 NOT RLIKE) 来操作正则表达式。
+                    SELECT * FROM Websites WHERE name REGEXP '^[A-H]';
+                    SELECT * FROM Websites WHERE name RLIKE '^[A-H]';
+            不带比较运算符的 WHERE 子句：
+                WHERE 子句并不一定带比较运算符，当不带运算符时，会执行一个隐式转换。当 0 时转化为 false，1 转化为 true。例如：
+                SELECT studentNO FROM student WHERE 0
+                则会返回一个空集，因为每一行记录 WHERE 都返回 false。
+                SELECT  studentNO  FROM student WHERE 1
+        order by:  ORDER BY 排列时，不写明ASC DESC的时候，默认是ASC。
+            order by A,B        这个时候都是默认按升序排列
+            order by A desc,B   这个时候 A 降序，B 升序排列
+            order by A ,B desc  这个时候 A 升序，B 降序排列
+        top:并非所有的数据库系统都支持 SELECT TOP 语句。 MySQL 支持 LIMIT 语句来选取指定的条数数据， Oracle 可以使用 ROWNUM 来选取。
+            mysql:SELECT *  FROM Persons LIMIT 5;
+            oracle:SELECT * FROM Persons WHERE ROWNUM <=5;
+        过滤重复数据：
+            SELECT DISTINCT last_name, first_name FROM person_tbl;
+            SELECT last_name, first_name FROM person_tbl GROUP BY (last_name, first_name);
+    join:
+        INNER JOIN：如果表中有至少一个匹配，则返回行
+        LEFT JOIN：即使右表中没有匹配，也从左表返回所有的行
+        RIGHT JOIN：即使左表中没有匹配，也从右表返回所有的行
+        FULL JOIN：只要其中一个表中存在匹配，则返回行
+            SELECT Websites.id, Websites.name, access_log.count, access_log.date
+            FROM Websites
+            INNER JOIN access_log
+            ON Websites.id=access_log.site_id;
+    union:
+        用于合并两个或多个 SELECT 语句的结果集。请注意，UNION 内部的每个 SELECT 语句必须拥有相同数量的列。列也必须拥有相似的数据类型。同时，每个 SELECT 语句中的列的顺序必须相同。
+        默认地，UNION 操作符选取不同的值。如果允许重复的值，请使用 UNION ALL。
+        UNION 结果集中的列名总是等于 UNION 中第一个 SELECT 语句中的列名。
+    函数：（mysql）
+        字符串函数：
+            CHAR_LENGTH(s)	返回字符串 s 的字符数  SELECT CHAR_LENGTH("RUNOOB") AS LengthOfString;
+            CONCAT(s1,s2...sn)	字符串 s1,s2 等多个字符串合并为一个字符串 SELECT CONCAT("SQL ", "Runoob ", "Gooogle ", "Facebook") AS ConcatenatedString;
+            CONCAT_WS(x, s1,s2...sn)	同 CONCAT(s1,s2,...) 函数，但是每个字符串直接要加上 x，x 可以是分隔符 SELECT CONCAT_WS("-", "SQL", "Tutorial", "is", "fun!")AS ConcatenatedString;
+            FIND_IN_SET(s1,s2)	返回在字符串s2中与s1匹配的字符串的位置 SELECT FIND_IN_SET("c", "a,b,c,d,e");
+            FORMAT(x,n)	函数可以将数字 x 进行格式化 "#,###.##", 将 x 保留到小数点后 n 位，最后一位四舍五入。SELECT FORMAT(250500.5634, 2);     -- 输出 250,500.56
+            INSERT(s1,x,len,s2)	字符串 s2 替换 s1 的 x 位置开始长度为 len 的字符串  SELECT INSERT("google.com", 1, 6, "runnob");  -- 输出：runoob.com
+            REPLACE(s,s1,s2)	将字符串 s2 替代字符串 s 中的字符串 s1  SELECT REPLACE('abc','a','x') --xbc
+            LOCATE(s1,s)	从字符串 s 中获取 s1 的开始位置 SELECT LOCATE('st','myteststring');  -- 5
+            LEFT(s,n)	返回字符串 s 的前 n 个字符  SELECT LEFT('runoob',2) -- ru
+            RIGHT(s,n)	返回字符串 s 的后 n 个字符  SELECT RIGHT('runoob',2) -- ob
+            LPAD(s1,len,s2)	在字符串 s1 的开始处填充字符串 s2，使字符串长度达到 len  SELECT LPAD('abc',5,'xx') -- xxabc
+            RPAD(s1,len,s2)	在字符串 s1 的结尾处添加字符串 s1，使字符串的长度达到 len  SELECT RPAD('abc',5,'xx') -- abcxx
+            TRIM(s)	去掉字符串 s 开始和结尾处的空格  SELECT TRIM('    RUNOOB    ') AS TrimmedString;
+            LTRIM(s)	去掉字符串 s 开始处的空格  SELECT LTRIM("    RUNOOB") AS LeftTrimmedString;-- RUNOOB
+            RTRIM(s)	去掉字符串 s 结尾处的空格  SELECT RTRIM("RUNOOB     ") AS RightTrimmedString;   -- RUNOOB
+            REPEAT(s,n)	将字符串 s 重复 n 次 SELECT REPEAT('runoob',3) -- runoobrunoobrunoob            
+            REVERSE(s)	将字符串s的顺序反过来 SELECT REVERSE('abc') -- cba           
+            SPACE(n)	返回 n 个空格  SELECT SPACE(10);
+            STRCMP(s1,s2)	比较字符串 s1 和 s2，如果 s1 与 s2 相等返回 0 ，如果 s1>s2 返回 1，如果 s1<s2 返回 -1  SELECT STRCMP("runoob", "runoob");  -- 0
+            SUBSTR(s, start, length)	从字符串 s 的 start 位置截取长度为 length 的子字符串  SELECT SUBSTR("RUNOOB", 2, 3) AS ExtractString; -- UNO
+            UPPER(s)	将字符串转换为大写  SELECT UPPER("runoob"); -- RUNOOB
+            LOWER(s)	将字符串 s 的所有字母变成小写字母  SELECT LOWER('RUNOOB') -- runoob
+        数字函数：
+            ABS(x)	返回 x 的绝对值　　SELECT ABS(-1) -- 返回1
+            AVG(expression)	返回一个表达式的平均值，expression 是一个字段	返回 Products 表中Price 字段的平均值：SELECT AVG(Price) AS AveragePrice FROM Products;
+            CEIL(x)	返回大于或等于 x 的最小整数　  SELECT CEIL(1.5) -- 返回2
+            FLOOR(x)	返回小于或等于 x 的最大整数　　SELECT FLOOR(1.5) -- 返回1
+            COUNT(expression)	返回查询的记录总数，expression 参数是一个字段或者 * 号  SELECT COUNT(ProductID) AS NumberOfProducts FROM Products;
+            n DIV m	整除，n 为被除数，m 为除数  SELECT 10 DIV 5;  -- 2
+            GREATEST(expr1, expr2, expr3, ...)  返回列表中的最大值  SELECT GREATEST(3, 12, 34, 8, 25); -- 34
+            LEAST(expr1, expr2, expr3, ...)	返回列表中的最小值  SELECT LEAST(3, 12, 34, 8, 25); -- 3
+            MAX(expression)	返回字段 expression 中的最大值  SELECT MAX(Price) AS LargestPrice FROM Products;
+            MIN(expression)	返回字段 expression 中的最小值  SELECT MIN(Price) AS LargestPrice FROM Products;
+            MOD(x,y)	返回 x 除以 y 以后的余数　SELECT MOD(5,2) -- 1
+            POW(x,y)	返回 x 的 y 次方　SELECT POW(2,3) -- 8
+            RAND()	返回 0 到 1 的随机数　　SELECT RAND() --0.93099315644334
+            ROUND(x)	返回离 x 最近的整数(四舍五入)	 SELECT ROUND(1.23456) --1
+            TRUNCATE(x,y)	返回数值 x 保留到小数点后 y 位的值（与 ROUND 最大的区别是不会进行四舍五入）
+            SQRT(x)	返回x的平方根　　SELECT SQRT(25) -- 5
+            SUM(expression)	返回指定字段的总和  SELECT SUM(Quantity) AS TotalItemsOrdered FROM OrderDetails;
+        日期函数：
+            ADDDATE(d,n)	计算其实日期 d 加上 n 天的日期  SELECT ADDDATE("2017-06-15", INTERVAL 10 DAY); ->2017-06-25
+                SELECT ADDDATE('2011-11-11 11:11:11',1)-> 2011-11-12 11:11:11    (默认是天)
+                SELECT ADDDATE('2011-11-11 11:11:11', INTERVAL 5 MINUTE) -> 2011-11-11 11:16:11 (TYPE的取值与上面那个列出来的函数类似)
+            SUBDATE(d,n)	日期 d 减去 n 天后的日期
+            ADDTIME(t,n)	时间 t 加上 n 秒的时间  SELECT ADDTIME('2011-11-11 11:11:11', 5) ->2011-11-11 11:11:16 (秒)
+            SUBTIME(t,n)	时间 t 减去 n 秒的时间
+            CURDATE()	返回当前日期	SELECT CURDATE(); -> 2018-09-19   ====CURRENT_DATE()
+            CURTIME()	返回当前时间  SELECT CURRENT_TIME();-> 19:59:02 =====CURRENT_TIME
+            CURRENT_TIMESTAMP()	返回当前日期和时间	SELECT CURRENT_TIMESTAMP() -> 2018-09-19 20:57:43
+            DATE()	从日期或日期时间表达式中提取日期值	SELECT DATE("2017-06-15");    -> 2017-06-15
+            DATEDIFF(d1,d2)	计算日期 d1->d2 之间相隔的天数	SELECT DATEDIFF('2001-01-01','2001-02-02')  -> -32
+            DATE_FORMAT(d,f)	按表达式 f的要求显示日期 d  SELECT DATE_FORMAT('2011-11-11 11:11:11','%Y-%m-%d %r')-> 2011-11-11 11:11:11 AM
+            DAY(d)	返回日期值 d 的日期部分	SELECT DAY("2017-06-15");  -> 15
+            DAYNAME(d)	返回日期 d 是星期几，如 Monday,Tuesday	SELECT DAYNAME('2011-11-11 11:11:11')->Friday
+            DAYOFMONTH(d)	计算日期 d 是本月的第几天	SELECT DAYOFMONTH('2011-11-11 11:11:11')->11
+            DAYOFWEEK(d)	日期 d 今天是星期几，1 星期日，2 星期一，以此类推	SELECT DAYOFWEEK('2011-11-11 11:11:11')->6
+            DAYOFYEAR(d)	计算日期 d 是本年的第几天 SELECT DAYOFYEAR('2011-11-11 11:11:11')->315
+            LAST_DAY(d)	返回给给定日期的那一月份的最后一天	SELECT LAST_DAY("2017-06-20");-> 2017-06-30
+            EXTRACT(type FROM d)	从日期 d 中获取指定的值，type 指定返回的值。 SELECT EXTRACT(MINUTE FROM '2011-11-11 11:11:11') -> 11
+                type可取值为： 
+                MICROSECOND
+                SECOND
+                MINUTE
+                HOUR
+                DAY
+                WEEK
+                MONTH
+                QUARTER
+                YEAR
+                SECOND_MICROSECOND
+                MINUTE_MICROSECOND
+                MINUTE_SECOND
+                HOUR_MICROSECOND
+                HOUR_SECOND
+                HOUR_MINUTE
+                DAY_MICROSECOND
+                DAY_SECOND
+                DAY_MINUTE
+                DAY_HOUR
+                YEAR_MONTH
+            HOUR(t)	返回 t 中的小时值	SELECT HOUR('1:2:3') -> 1
+            LOCALTIME()	返回当前日期和时间	SELECT LOCALTIME()-> 2018-09-19 20:57:43
+            LOCALTIMESTAMP()	返回当前日期和时间	SELECT LOCALTIMESTAMP() -> 2018-09-19 20:57:43
+            NOW()	返回当前日期和时间	SELECT NOW()-> 2018-09-19 20:57:43
+            PERIOD_ADD(period, number)	为 年-月 组合日期添加一个时段	SELECT PERIOD_ADD(201703, 5);   -> 201708
+            PERIOD_DIFF(period1, period2)	返回两个时段之间的月份差值	SELECT PERIOD_DIFF(201710, 201703);-> 7
+            QUARTER(d)	返回日期d是第几季节，返回 1 到 4	SELECT QUARTER('2011-11-11 11:11:11')-> 4
+            STR_TO_DATE(string, format_mask)	将字符串转变为日期	SELECT STR_TO_DATE("August 10 2017", "%M %d %Y");-> 2017-08-10
+
+        其他函数：
+            CAST(x AS type)	转换数据类型	字符串日期转换为日期：SELECT CAST("2017-08-29" AS DATE);-> 2017-08-29
+            COALESCE(expr1, expr2, ...., expr_n)	返回参数中的第一个非空表达式（从左向右）  	SELECT COALESCE(NULL, NULL, NULL, 'runoob.com', NULL, 'google.com');-> runoob.com
+            DATABASE()	返回当前数据库名	SELECT DATABASE();   -> runoob
+            IF(expr,v1,v2)	如果表达式 expr 成立，返回结果 v1；否则，返回结果 v2。	SELECT IF(1 > 0,'正确','错误')    ->正确
+            IFNULL(v1,v2)	如果 v1 的值不为 NULL，则返回 v1，否则返回 v2。	SELECT IFNULL(null,'Hello Word')->Hello Word
+            ISNULL(expression)	判断表达式是否为 NULL	SELECT ISNULL(NULL);->1
+            LAST_INSERT_ID()	返回最近生成的 AUTO_INCREMENT 值	SELECT LAST_INSERT_ID();->6
+    运算符：
+        算术运算符：
+            +	加法
+            -	减法
+            *	乘法
+            / 或 DIV	除法
+            % 或 MOD	取余 
+        比较运算符：
+            =	等于	
+            <>, !=	不等于	
+            >	大于	
+            <	小于	
+            <=	小于	
+            >=	大于等于	
+            BETWEEN	在两值之间	>=min&&<=max
+            NOT BETWEEN	不在两值之间	
+            IN	在集合中	
+            NOT IN	不在集合中	
+            <=>	严格比较两个NULL值是否相等	两个操作码均为NULL时，其所得值为1；而当一个操作码为NULL时，其所得值为0
+            LIKE	模糊匹配	
+            REGEXP 或 RLIKE	正则式匹配	
+            IS NULL	为空	
+            IS NOT NULL	不为空	
+        逻辑运算符：or > and
+            NOT 或 !	逻辑非
+            AND	或 &&   逻辑与
+            OR	或 ||   逻辑或
+            XOR	或 ^    逻辑异或  
+        位运算符：
+            &	按位与
+            |	按位或
+            ^	按位异或
+            !	取反
+            <<	左移
+            >>	右移
+    sql约束：
+        NOT NULL - 指示某列不能存储 NULL 值。
+        UNIQUE - 保证某列的每行必须有唯一的值。
+        PRIMARY KEY - NOT NULL 和 UNIQUE 的结合。确保某列（或两个列多个列的结合）有唯一标识，有助于更容易更快速地找到表中的一个特定的记录。
+        FOREIGN KEY - 保证一个表中的数据匹配另一个表中的值的参照完整性。
+        CHECK - 保证列中的值符合指定的条件。
+        约束可以在创建表时规定（通过 CREATE TABLE 语句），或者在表创建之后规定（通过 ALTER TABLE 语句）。
+            CREATE TABLE Persons
+            (
+                Id_P int NOT NULL PRIMARY KEY,   //PRIMARY KEY约束
+                LastName varchar(255) NOT NULL,
+                FirstName varchar(255),
+                Address varchar(255),
+                City varchar(255)
+            )
+ 
+hivesql:
+    解释器：解释器的作用是将HiveSQL语句转换为语法树（AST）。
+    编译器：编译器是将语法树编译为逻辑执行计划。
+    优化器：优化器是对逻辑执行计划进行优化。
+    执行器：执行器是调用底层的运行框架执行逻辑执行计划。
+    DDL语法:
+        数据库
+            hive> create database if not exists user_db;
+            hive> describe database user_db;
+            hive> show databases;  
+            hive> drop database if exists testdb cascade;
+            hive> use user_db;
+        表
+            创建表一般有几种方式：
+            create table 方式：以上例子中的方式。
+            create table as select 方式：根据查询的结果自动创建表，并将查询结果数据插入新建的表中。
+            create table like tablename1 方式：是克隆表，只复制tablename1表的结构。
+            创建普通表
+                hive> create table if not exists userinfo  
+                    > (
+                    >   userid int,
+                    >   username string,
+                    >   cityid int,
+                    >   createtime date    
+                    > )
+                    > row format delimited fields terminated by '\t'
+                    > stored as textfile;
+            创建外部表
+                hive> create external table iislog_ext (
+                    >  ip string,
+                    >  logtime string    
+                    > )
+                    > ;
+            创建分区表
+                --创建经销商操作日志表
+                create table user_action_log
+                (
+                companyId INT comment   '公司ID',
+                userid INT comment   '销售ID',
+                originalstring STRING comment   'url', 
+                host STRING comment   'host',
+                absolutepath STRING comment   '绝对路径',
+                query STRING comment   '参数串',
+                refurl STRING comment   '来源url',
+                clientip STRING comment   '客户端Ip',
+                cookiemd5 STRING comment   'cookiemd5',
+                timestamp STRING comment   '访问时间戳'
+                )
+                partitioned by (dt string)
+                row format delimited fields terminated by ','
+                stored as textfile;
+            创建桶表
+                ------创建订单表
+                create table user_leads
+                (
+                leads_id string,
+                user_id string,
+                user_id string,
+                user_phone string,
+                user_name string,
+                create_time string
+                )
+                clustered by (user_id) sorted by(leads_id) into 10 buckets 
+                row format delimited fields terminated by '\t' 
+                stored as textfile;
+            查询库中表
+                show tables;
+                Show TABLES '*info';  --可以用正则表达式筛选要列出的表
+            查看表定义
+                describe userinfo;
+                查看表详细信息：describe formatted userinfo;
+            删除表
+                --如果表存在，就删除。
+                drop table if exists user_info;
+    DML语法
+        向Hive中加载数据
+            加载到普通表  load data local inpath '/home/hadoop/userinfodata.txt' overwrite into table user_info;
+            加载到分区表 load data local inpath '/home/hadoop/actionlog.txt' overwrite into table user_action_log PARTITION (dt='2017-05-26');
+            加载到分桶表
+                ------先创建普通临时表
+                create table user_leads_tmp
+                (
+                leads_id string,
+                user_id string,
+                user_id string,
+                user_phone string,
+                user_name string,
+                create_time string
+                )
+                row format delimited fields terminated by ',' 
+                stored as textfile;
+                ------数据载入临时表
+                load data local inpath '/home/hadoop/lead.txt' overwrite into table user_leads_tmp;
+                ------导入分桶表
+                set hive.enforce.bucketing = true;
+                insert overwrite table user_leads select * from  user_leads_tmp;
+            导出数据
+                --导出数据，是将hive表中的数据导出到本地文件中。去掉local关键字，也可以导出到HDFS上。
+                insert overwrite local directory '/home/hadoop/user_info.bak2016-08-22 ' select * from user_info;
+            插入数据
+                insert overwrite table user_leads select * from  user_leads_tmp;  
+                insert overwrite table user_leads PARTITION (dt='2017-05-26') select * from  user_leads_tmp;
+                一次遍历多次插入
+                    from user_action_log
+                    insert overwrite table log1 select companyid,originalstring  where companyid='100006'
+                    insert overwrite table log2 select companyid,originalstring  where companyid='10002'
+        复制表
+            复制表是将源表的结构和数据复制并创建为一个新表，复制过程中，可以对数据进行筛选，列可以进行删减。
+            create table user_leads_bak
+            row format delimited fields terminated by '\t'
+            stored as textfile
+            as
+            select leads_id,user_id,'2016-08-22' as bakdate
+            from user_leads
+            where create_time<'2016-08-22';
+            上面这个例子是对user_leads表进行复制备份，复制时筛选了2016-08-22以前的数据，减少几个列，并添加了一个bakdate列。
+
+        克隆表
+            克隆表时会克隆源表的所有元数据信息，但是不会复制源表的数据。
+            --克隆表user_leads，创建新表user_leads_like
+            create table user_leads_like like  user_leads;
+        备份表
+            备份是将表的元数据和数据都导出到HDFS上。
+            export table user_action_log partition (dt='2016-08-19')
+            to '/user/hive/action_log.export'
+            这个例子是将user_action_log表中的一个分区，备份到HDFS上，to后面的路径是HDFS上的路径。
+
+        还原表
+            将备份在HDFS上的文件，还原到user_action_log_like表中。
+            import table user_action_log_like from '/user/hive/action_log.export';    
+
+
+
+
+
+★★★★★★多表连续join时  不显式使用临时表则被关联的表只能跟from后的表做关联 相当于a join b unionall a join c 
+        比如：select * from a
+        left join b on a.userid=b.userid
+        //此时是拿a表和c表做join   所以此行不能出现其他表比如说b表 否则会报错不识别on后的关联条件  所以此时的应用场景就受限了  如果还想拿b表和c表做关联只能通过临时表即子查询的形式进行
+        #left join c on b.orderid=c.orderid  
+        left join c on a.orderid=c.orderid
+★★★★★★hive 中‘不等于’不管是用！ 或者<>符号实现，都会将空值即null过滤掉，此时要用
+		where （white_level<>'3' or  white_level is null） 或者 where (white_level!='3' or white_level is null )  来保留null 的情况。
+    hive 常见函数
+        lateral view 与 explode
+        select get_json_object(concat('{',sale_info_1,'}'),'$.source') as source,
+         get_json_object(concat('{',sale_info_1,'}'),'$.monthSales') as monthSales,
+         get_json_object(concat('{',sale_info_1,'}'),'$.userCount') as monthSales,
+         get_json_object(concat('{',sale_info_1,'}'),'$.score') as monthSales
+         from explode_lateral_view 
+         LATERAL VIEW explode(split(regexp_replace(regexp_replace(sale_info,'\\[\\{',''),'}]',''),'},\\{'))sale_info as sale_info_1;
+       将json数据 [{"source":"7fresh","monthSales":4900,"userCount":1900,"score":"9.9"},
+        {"source":"jd","monthSales":2090,"userCount":78981,"score":"9.8"},
+        {"source":"jdmart","monthSales":6987,"userCount":1600,"score":"9.0"}]  
+        每一个json转换为source列   monthsales列   usercount列  score 列  转换后一共三行
+
+
+    Hive常用日期格式转换
+        固定日期转换成时间戳
+        select unix_timestamp('2016-08-16','yyyy-MM-dd') --1471276800
+        select unix_timestamp('20160816','yyyyMMdd') --1471276800
+        select unix_timestamp('2016-08-16T10:02:41Z', "yyyy-MM-dd'T'HH:mm:ss'Z'") --1471312961
+
+        16/Mar/2017:12:25:01 +0800 转成正常格式（yyyy-MM-dd hh:mm:ss）
+        select from_unixtime(to_unix_timestamp('16/Mar/2017:12:25:01 +0800', 'dd/MMM/yyy:HH:mm:ss Z'))
+
+        时间戳转换程固定日期
+        select from_unixtime(1471276800,'yyyy-MM-dd') --2016-08-16
+        select from_unixtime(1471276800,'yyyyMMdd') --20160816
+        select from_unixtime(1471312961) --    2016-08-16 10:02:41
+        select from_unixtime( unix_timestamp('20160816','yyyyMMdd'),'yyyy-MM-dd')  --2016-08-16
+        select date_format('2016-08-16','yyyyMMdd') --20160816
+
+        返回日期时间字段中的日期部分
+        select to_date('2016-08-16 10:03:01') --2016-08-16
+        取当前时间
+        select from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss')
+        select from_unixtime(unix_timestamp(),'yyyy-MM-dd') 
+        返回日期中的年
+        select year('2016-08-16 10:03:01') --2016
+        返回日期中的月
+        select month('2016-08-16 10:03:01') --8
+        返回日期中的日
+        select day('2016-08-16 10:03:01') --16
+        返回日期中的时
+        select hour('2016-08-16 10:03:01') --10
+        返回日期中的分
+        select minute('2016-08-16 10:03:01') --3
+        返回日期中的秒
+        select second('2016-08-16 10:03:01') --1
+
+        返回日期在当前的周数
+        select weekofyear('2016-08-16 10:03:01') --33
+
+        返回结束日期减去开始日期的天数
+        select datediff('2016-08-16','2016-08-11') 
+
+        返回开始日期startdate增加days天后的日期
+        select date_add('2016-08-16',10)
+
+        返回开始日期startdate减少days天后的日期
+        select date_sub('2016-08-16',10)
+
+        返回当天三种方式
+        SELECT CURRENT_DATE;    --2017-06-15
+        SELECT CURRENT_TIMESTAMP;--返回时分秒    --2017-06-15 19:54:44
+        SELECT from_unixtime(unix_timestamp());    --2017-06-15 19:55:04
+        返回当前时间戳
+        Select current_timestamp   --2018-06-18 10:37:53.278
+
+        返回当月的第一天
+        select trunc('2016-08-16','MM') --2016-08-01
+        返回当年的第一天
+        select trunc('2016-08-16','YEAR') --2016-01-01
+    数学函数：
+      round(2.5)     3.0   四舍五入   round(0.5002,2)    0.5  保留两位小数的四舍五入
+      floor(6.10)    6   向下取整       ceil(6.10)    7   向上取整
+      rand()   0-1之间的随机数     rand(2)   0-2之间的随机数
+      abs(-1)   1   绝对值
+    类型转换函数：
+        cast("1" as BIGINT)     将字符串1 转换成bigint   转换失败返回null
+    条件函数：
+        如果value值为NULL就返回default_value,否则返回value         nvl(T value, T default_value)
+        如果a为null就返回true，否则返回false   isnull( a )
+        如果a为非null就返回true，否则返回false     isnotnull ( a )
+    字符函数：
+        concat(string|binary A, string|binary B...)    拼接字符串
+        concat_ws(string SEP, string A, string B...)   使用指定分隔符拼接
+        length(string A) 返回字符串的长度
+        lower(string A)    upper(string a)   大小写转换
+        lpad(string str, int len, string pad) 从左边开始对字符串str使用字符串pad填充，最终len长度为止，如果字符串str本身长度比len大的话，将去掉多余的部分
+        ltrim(string A) 去掉字符串A前面的空格   rtrim(A) trim(A)
+        regexp_extract(string subject, string pattern, int index) 抽取字符串subject中符合正则表达式pattern的第index个部分的子字符串，注意些预定义字符的使用，如第二个参数如果使用'\s'将被匹配到s,'\\s'才是匹配空格
+        regexp_replace(string INITIAL_STRING, string PATTERN, string REPLACEMENT) 按照Java正则表达式PATTERN将字符串INTIAL_STRING中符合条件的部分成REPLACEMENT所指定的字符串，如里REPLACEMENT这空的话，抽符合正则的部分将被去掉  如：regexp_replace("foobar", "oo|ar", "") = 'fb.' 注意些预定义字符的使用，如第二个参数如果使用'\s'将被匹配到s,'\\s'才是匹配空格
+        split(string str, string pat) 按照正则表达式pat来分割字符串str,并将分割后的数组字符串的形式返回
+        substr(string|binary A, int start, int len) 对于二进制/字符串A,从start位置开始截取长度为length的字符串并返回 len可以省 表示直到末尾
+        函数parse_url,解析URL字符串
+            1 parse_url(url, partToExtract[, key]) - extracts a part from a URL  
+            2 解析URL字符串，partToExtract的选项包含[HOST,PATH,QUERY,REF,PROTOCOL,FILE,AUTHORITY,USERINFO]。 
+            3 举例：
+            4 hive> select parse_url('http://facebook.com/path/p1.php?query=1', 'HOST') ;
+            5 OK
+            6 facebook.com
+            7 Time taken: 0.286 seconds, Fetched: 1 row(s)
+            8 hive> select parse_url('http://facebook.com/path/p1.php?query=1', 'PATH');
+            9 OK
+            10 /path/p1.php
+            11 Time taken: 0.069 seconds, Fetched: 1 row(s)
+            12 hive> select parse_url('http://facebook.com/path/p1.php?query=1', 'QUERY');
+            13 OK
+            14 query=1
+            15 可以指定key来返回特定参数，例如 
+            16 Time taken: 0.21 seconds, Fetched: 1 row(s)
+            17 hive> select parse_url('http://facebook.com/path/p1.php?query=1', 'QUERY','query');
+            18 OK
+            19 1
+            20 Time taken: 0.057 seconds, Fetched: 1 row(s)
+            21 hive> select parse_url('http://facebook.com/path/p1.php?query=1#Ref', 'REF');
+            22 OK
+            23 Ref
+            24 Time taken: 0.055 seconds, Fetched: 1 row(s)
+            25 hive> select parse_url('http://facebook.com/path/p1.php?query=1#Ref', 'PROTOCOL');
+            26 OK
+            27 http
+            28 Time taken: 0.06 seconds, Fetched: 1 row(s)
+            1 hive> select parse_url_tuple('http://facebook.com/path1/p.php?k1=v1&k2=v2#Ref1', 'QUERY:k1', 'QUERY:k2'); 
+            2 OK
+            3 v1      v2
+            4 Time taken: 0.2 seconds, Fetched: 1 row(s)
+        json解析函数：get_json_object
+            语法: get_json_object(string json_string, string path)
+            1 返回值: string  
+            2 说明：解析json的字符串json_string,返回path指定的内容。如果输入的json字符串无效，那么返回NULL。  
+            3 举例： hive> select get_json_object('{"store":{"fruit":\[{"weight":8,"type":"apple"},{"weight":9,"type":"pear"}],"bicycle":{"price":19.95,"color":"red"} }, "email":"amy@only_for_json_udf_test.net","owner":"amy"}','$.store'); 
+            4 OK
+            5 {"fruit":[{"weight":8,"type":"apple"},{"weight":9,"type":"pear"}],"bicycle":{"price":19.95,"color":"red"}}
+            6 Time taken: 0.108 seconds, Fetched: 1 row(s)
+            7 
+            8 hive> select get_json_object('{"store":{"fruit":\[{"weight":8,"type":"apple"},{"weight":9,"type":"pear"}],"bicycle":{"price":19.95,"color":"red"} }, "email":"amy@only_for_json_udf_test.net","owner":"amy"}','$.email'); 
+            9 OK
+            10 amy@only_for_json_udf_test.net
+            11 
+            12 hive> select get_json_object('{"store":{"fruit":\[{"weight":8,"type":"apple"},{"weight":9,"type":"pear"}],"bicycle":{"price":19.95,"color":"red"} }, "email":"amy@only_for_json_udf_test.net","owner":"amy"}','$.owner'); 
+            13 OK
+            14 amy
+            15 Time taken: 0.499 seconds, Fetched: 1 row(s)
+    聚合函数：
+         统计总行数，包括含有NULL值的行  count(*)
+         统计提供非NULL的expr表达式值的行数 count(expr)
+         统计提供非NULL且去重后的expr表达式值的行数  count(DISTINCT expr[, expr])
+         sum(col),表示求指定列的和   
+         avg(col),表示求指定列的平均值
+         min(col) 求指定列的最小值 
+         max(col) 求指定列的最大值 
+
+    窗口函数：
+        基本格式：分析函数 over(partition by f1 order by f2 rows between A and B) ......        unbounded preceding ,unbounded following,current row,
+        一：sum(),min(),avg(),sum()
+        二：ntile(n),row_number(),rank(),dense_rank(),cume_dist(),precent_rank()
+        三：lag(cloumn,n,defaultvalue),lead(column,n,defaultvalue),first_value(),last_value()
+        四：grouping sets、grouping_id、(group by f1,f2,,,,)with cube、(group by f1,f2,,,,)with rollup
+
+
+ 
+
+
+
+
+
+
+                
+

@@ -1,0 +1,883 @@
+scala:
+    控制语句：
+        if() {}    
+            else if() {}    
+            else {}
+        for(i<-表达式、数组、集合)
+        for（i<-表达式、数组、集合 if....;j<-表达式、数组、集合 if....){}    嵌套循环   for生成器
+        for(i<-表达式、数组、集合) yield {}  产生一个Array
+    方法和函数：
+        def func(a:Int,b:String):Unit = {  }   
+            调用  A.func(1,2)
+        val b = (a:Int,b:String):Unit=>{  }    
+            调用 1.A.func(b)   2. b(1,2)    比上边多了一个直接做参数的作用。
+
+    数据类型：
+        primative: Byte Char Short Int Long  Float Double Boolean
+        other:  Tuple   Array  List   Set   Map     Scala.collection.mutable._
+            Array    长度不可变   内容可变   ArrayBuffer    长度可变  内容可变
+            List      内容不可变    ListBuffer  内容可变
+                创建一个空List   val lst = nil    List  由一个head+nil  组成
+                常见并初始化一个list    
+                val lst = "a"::"b"::"c"::nil
+                val lst = List(a,1,b,c)
+                a::lstb  (a+:lstb)       ab    lsta:+b  ab
+                lsta:::lstb （lsta++:lstb ）  lsta++lstb    ab    //lsta:++lstb    ab  不支持           
+            Tuple   val tuple = (a,1,b,c)   tuple._1
+            Set   
+                不可变Set
+                    val set =Set(1,2,3,4,5,6,7)
+                    set + 8    将元素和set1合并生成一个新的set，原有set不变
+                    set & set1   两个集合的交集
+                    set ++ set1   两个集合的并集
+                    set -- set1    在第一个set基础上去掉第二个set中存在的元素
+                可变Set    
+                    val set1=new HashSet[Int]()
+                    set1 += 1  添加元素     set1 -=5    删除一个元素
+                    set1 ++=Set(1,4,5)   向集合中添加元素集合
+            Map    对偶的数组或集合转map   .toMap
+                不可变Map
+                    val  map = Map(“zhangsan”->30,”lisi”->40)
+                    val  map = Map((“zhangsan”,30),(“lisi”,40))
+                    map(key)   map.getOrElse(key,defaltvalue)
+                    map.keys/map.keySet ----->Set
+                可变Map
+                    val user =mutable.HashMap("zhangsan"->50,"lisi" -> 100)
+                    user +=("wangwu" -> 30)    user += ("zhangsan" -> 60, "lisi" -> 50)   添加或更新键值对
+                    user -=("zhangsan")    删除key
+                    user.keys/user.keySet
+                    user("zhangsan")    user.getOrElse("zhangsan",0)
+                    //遍历map 方法一：通过key值
+                    for(x<- user.keys) println(x+" -> "+user(x))
+                    lisi -> 50
+                    lisi0 -> 20
+                    wangwu -> 30
+                    //遍历map 方法二：模式匹配
+                    for((x,y) <- user) println(x+" -> "+y)
+                    //遍历map 方法三：通过foreach
+                    user.foreach{case (x,y) => println(x+" -> "+y)}
+           
+            
+    面向对象：
+        类型判断：
+            p:parent    c:child     父类引用指向子类对象
+            if(p.isInstanceOf[C]{
+                p.asInstanceOf[C]
+            }
+            isInstanceOf 只能判断出对象是否为指定类以及其子类的对象，而不能精确的判断出，对象就是指定类的对象；
+            如果要求精确地判断出对象就是指定类的对象，那么就只能使用 getClass 和 classOf 了；
+            p.getClass 可以精确地获取对象的类，classOf[XX] 可以精确的获取类，然后使用 == 操作符即可判断；
+            p.getClass == classOf[C])     true;
+            p.getClass == classOf[P])     false;
+            p.isInstanceOf[C])            true;
+            p.isInstanceOf[P]             true;
+        模式匹配进行类型判断：
+            使用模式匹配，功能性上来说，与 isInstanceOf 的作用一样，主要判断是否为该类或其子类的对象即可，不是精准判断。
+            val p:Person5=new Student5
+                p match {
+                // 匹配是否为Person类或其子类对象
+                case per:Person5 => println("This is a Person5's Object!")
+                // 匹配所有剩余情况
+                case _  =>println("Unknown type!")
+                }
+        抽象类：类中只要含有一个抽象字段或者抽象方法  优先使用trait 
+        trait：  
+            trait中可以含有非抽象的方法或者字段。  trait可以继承类。 
+            子类继承trait  如果trait里有非抽象字段则直接添加到子类里   这与继承类是不同的，继承类时字段依旧是定义在父类中。
+            子类继承trait  如果trait里有抽象字段或者方法则子类必须重写。这一点也不同于抽象类  抽象类的子类也可能还是抽象类。
+            trait混入：   直接对方法增强
+                trait LoggedTrait {
+                    // 该方法为实现的具体方法
+                    def log(msg: String) = {}
+                }
+                trait MyLogger extends LoggedTrait{
+                    // 覆盖 log() 方法
+                    override def log(msg: String) = println("log: " + msg)
+                }
+                class PersonForMixTraitMethod(val name: String) extends LoggedTrait {
+                    def sayHello = {
+                        println("Hi, I'm " + this.name)
+                        log("sayHello method is invoked!")
+                    }
+                }
+                object PersonForMixTraitMethod{
+                    def main(args: Array[String]) {
+                        val tom= new PersonForMixTraitMethod("Tom").sayHello //结果为：Hi, I'm Tom
+                        // 使用 with 关键字，指定混入MyLogger trait
+                        val rose = new PersonForMixTraitMethod("Rose") with MyLogger
+                        rose.sayHello
+                    // 结果为：     Hi, I'm Rose
+                    // 结果为：     log: sayHello method is invoked!
+                    }
+                }
+
+            trait调用链:    自右向左调用各个trait的同一方法。
+                trait HandlerTrait {
+                    def handle(data: String) = {println("last one")}  //关键点
+                }
+                trait DataValidHandlerTrait extends HandlerTrait {
+                    override def handle(data: String) = {             //关键点
+                                println("check data: " + data)
+                                super.handle(data)                    //关键点
+                    }
+                }
+                trait SignatureValidHandlerTrait extends HandlerTrait {
+                    override def handle(data: String) = {           //关键点
+                            println("check signature: " + data)
+                            super.handle(data)                       //关键点
+                    }
+                }
+                class PersonForRespLine(val name: String) extends SignatureValidHandlerTrait with DataValidHandlerTrait {
+                    def sayHello = {
+                            println("Hello, " + this.name)
+                            this.handle(this.name)                 //关键点
+                    }
+                }
+                object PersonForRespLine{
+                    def main(args: Array[String]) {
+                        val p=new PersonForRespLine("tom")
+                        p.sayHello
+                        //执行结果：
+                    //    Hello, tom
+                    //    check data: tom
+                    //    check signature: tom
+                    //    last one
+                    }
+                }
+            trait构造机制：
+                父类的构造函数先执行， class 类必须放在最左边；多个trait从左向右依次执行；构造trait时，先构造父 trait，如果多个trait继承同一个父trait，则父trait只会构造一次；所有trait构造完毕之后，子类的构造函数最后执行。
+                    class Person_One {
+                        println("Person's constructor!")
+                    }
+                    trait Logger_One {
+                        println("Logger's constructor!")
+                    }
+                    trait MyLogger_One extends Logger_One {
+                        println("MyLogger's constructor!")
+                    }
+                    trait TimeLogger_One extends Logger_One {
+                        println("TimeLogger's contructor!")
+                    }
+                    class Student_One extends Person_One with MyLogger_One with TimeLogger_One {
+                        println("Student's constructor!")
+                    }
+                    object exe_one {
+                        def main(args: Array[String]): Unit = {
+                            val student = new Student_One
+                            //执行结果为：
+                            //      Person's constructor!
+                            //      Logger's constructor!
+                            //      MyLogger's constructor!
+                            //      TimeLogger's contructor!
+                            //      Student's constructor!
+                        }
+                    }
+        模式匹配：switch语句、类型检查等
+            匹配字符串：
+               name match {
+                    case "hadoop"    => println("大数据分布式存储和计算框架...")
+                    case "zookeeper" => println("大数据分布式协调服务框架...")
+                    case "spark" => println("大数据分布式内存计算框架...")
+                    case _ => println("我不认识你...")
+                }
+            匹配类型：
+                v match {
+                    case x: Int => println("Int " + x)
+                    case y: Double if(y >= 0) => println("Double "+ y)
+                    case z: String => println("String " + z)
+                    case _ => throw new Exception("not match exception")
+                }
+            匹配数组、元组、集合：
+                val arr = Array(1, 3, 5)
+                arr match {
+                    case Array(1, x, y) => println(x + " " + y)
+                    case Array(0) => println("only 0")
+                    case Array(0, _*) => println("0 ...")
+                    case _ => println("something else")
+                }
+
+                val lst = List(3, -1)
+                lst match {
+                    case 0 :: Nil => println("only 0")
+                    case x :: y :: Nil => println(s"x: $x y: $y")
+                    case 0 :: tail => println("0 ...")
+                    case _ => println("something else")
+                }
+
+                val tup = (1, 3, 7)
+                tup match {
+                    case (1, x, y) => println(s"1, $x , $y")
+                    case (_, z, 5) => println(z)
+                    case  _ => println("else")
+                }
+            匹配样例类：
+                arr(Random.nextInt(arr.length)) match {
+                    case SubmitTask(id, name) => {
+                        println(s"$id, $name")
+                    }
+                    case HeartBeat(time) => {
+                        println(time)
+                    }
+                    case CheckTimeOutTask => {
+                        println("check")
+                    }
+                }
+            匹配option类型：
+                val v = map.get("b") match {
+                    case Some(i) => i
+                    case None => 0
+                }
+            偏函数:
+                它是PartialFunction[A, B]的一个实例，A代表输入参数类型，B代表返回结果类型，常用作输入模式匹配，偏函数最大的特点就是它只接受和处理其参数定义域的一个子集。
+                val func1: PartialFunction[String, Int] = {
+                    case "one" => 1
+                    case "two" => 2
+                    case _ => -1
+                }
+
+                def func2(num: String) : Int = num match {
+                    case "one" => 1
+                    case "two" => 2
+                    case _ => -1
+                }
+
+                def main(args: Array[String]) {
+                    println(func1("one"))
+                    println(func2("one"))
+                }
+        逆变、协变、非变   上界、下界：
+            协变和逆变主要是用来解决参数化类型的泛化问题。看参数泛化方向和参数类型方向是否一致 。
+            协变：    C[+T]：如果A是B的子类，那么C[A]是C[B]的子类。
+            逆变：    C[-T]：如果A是B的子类，那么C[B]是C[A]的子类。
+            非变：    C[T]： 无论A和B是什么关系，C[A]和C[B]没有从属关系。
+            (1) U >: T  这是类型下界的定义，也就是U必须是类型T的父类本身。
+            (2) S <: T  这是类型上界的定义，也就是S必须是类型T的子类本身。
+            函数入参：逆变+上界    返回值：协变+下界     逆变协变对应的是包含泛型方法的类，上界下界对应的是泛型方法的泛型。
+                class Animal {}
+                    class Bird extends Animal {}
+                    class Consumer[-S,+T]() {
+                        def m1[U >: T](u: U): T = {new T} //协变，下界
+                        def m2[U <: S](s: S): U = {new U} //逆变，上界
+                    }
+                    class Test extends App {
+                        val c:Consumer[Animal,Bird] = new Consumer[Animal,Bird]()
+                        val c2:Consumer[Bird,Animal] = c
+                        c2.m1(new Animal)
+                        c2.m2(new Bird)
+                    }
+            理解：
+                逆变协变经典理解：根据里氏替换原则，如果A是B的子类，那么能适用于B的所有操作，都适用于A。即：适用于父类的操作都适用于子类。
+                def f1(x: Bird): Animal // instance of Function1[Bird, Animal]
+                def f2(x: Animal): Bird // instance of Function1[Animal, Bird]
+                在这里f2的类型是f1的类型的子类。为什么？  
+                参数类型，
+                    根据Liskov替换原则，f1能够接受的参数，f2也能接受 。在这里f1接受的Bird类型，f2显然可以接受，因为Bird对象可以被当做其父类Animal的对象来使用。
+                返回类型，
+                    f1的返回值可以被当做Animal的实例使用，f2的返回值可以被当做Bird的实例使用，当然也可以被当做Animal的实例使用。
+                所以我们说，函数的参数类型是逆变的，而函数的返回类型是协变的。
+                那么我们在定义Scala类的时候，是不是可以随便指定泛型类型为协变或者逆变呢？
+                答案是否定的。通过上面的例子可以看出，如果将Function1的参数类型定义为协变，或者返回类型定义为逆变，都会违反Liskov替换原则，
+                因此，Scala规定，协变类型只能作为方法的返回类型，而逆变类型只能作为方法的参数类型。类比函数的行为，结合Liskov替换原则，就能发现这样的规定是非常合理的。
+                上界下界经典理解：上界下界是受协变逆变类型约束的类型的界限
+                根据李氏替换原则:S<--C<--P  子类<--父类
+                协变：CLS(S)<--CLS(C)<--CLS(P)  协变需指定下界
+                逆变：CLS(P)<--CLS(C)<--CLS(S)  逆变需指定上界
+                结论：
+                    协变逆变：【入参是适配(用子类去匹配)  返回值是被使用(用父类去接收)】
+                    上界下界：泛型的类型要符合里氏替换原则
+
+    高阶函数：
+        值函数：
+        匿名函数：
+        柯里化：
+            def curriedSum(x:Int)(y:Int)=x+y
+            curriedSum(1)(2)
+    隐式转换   （implicit:可以达到类方法增强的目的，功能很强大，但是代码阅读性降低）
+            隐式定义是指编译器为了修正类型错误而允许插入到程序中的定义。
+            隐式转换的本质是类型的转换和参数的默认值配置。
+            ==============精华==============
+            比如：A.func(B)     
+                A.func  隐式参数转换     ----->提前给B类型一个默认值。
+                A中有func方法           ----->将B转成func方法需要的类型。   会现在A的class和object中搜索有没有对应的类型转换，再在import中搜索（一般讲隐式转换写在一个object里然后import进来）。
+                A中没有func方法         ----->将A转换成含有func方法的类型。
+            ============================
+            （1）当对象调用类中不存在的方法或成员时，编译器会自动将对象进行隐式转换    
+            （2）当方法中的参数的类型与目标类型不一致时    
+                案例：
+                    隐式转换案例一（让File类具备RichFile类中的read方法）
+
+                        object MyPredef{
+                            //定义隐式转换方法
+                            implicit def file2RichFile(file: File)=new RichFile(file)
+                        }
+                        class RichFile(val f:File) {
+                            def read()=Source.fromFile(f).mkString
+                        }
+                        object RichFile{
+                            def main(args: Array[String]) {
+                                val f=new File("E://words.txt")
+                                //使用import导入隐式转换方法  通过隐式转换，让File类具备了RichFile类中的方法
+                                import MyPredef._                        
+                                val content=f.read()
+                                println(content)
+                            }
+                        }
+                    隐式转换案例二（超人变身）
+                        class Man(val name:String)
+                        class SuperMan(val name: String) {
+                            def heat=print("超人打怪兽")
+                        }
+                        object SuperMan{
+                            //隐式转换方法
+                            implicit def man2SuperMan(man:Man)=new SuperMan(man.name)
+                            def main(args: Array[String]) {
+                                val hero=new Man("hero")
+                                //Man具备了SuperMan的方法
+                                hero.heat
+                            }
+                        }
+                    隐式转换案例三（一个类隐式转换成具有相同方法的多个类）
+                        class A(c:C) {
+                            def readBook(): Unit ={
+                            println("A说：好书好书...")
+                            }
+                        }
+                        class B(c:C){
+                            def readBook(): Unit ={
+                                println("B说：看不懂...")
+                            }
+                        def writeBook(): Unit ={
+                            println("B说：不会写...")
+                        }
+                        }
+                        class C
+                        object AB{
+                            //创建一个类的2个类的隐式转换
+                            implicit def C2A(c:C)=new A(c)
+                            implicit def C2B(c:C)=new B(c)
+                        }
+                        object B{
+                            def main(args: Array[String]) {
+                                //导包
+                                //1. import AB._ 会将AB类下的所有隐式转换导进来
+                                //2. import AB._C2A 只导入C类到A类的的隐式转换方法
+                                //3. import AB._C2B 只导入C类到B类的的隐式转换方法
+                                import AB._
+                                val c=new C
+                                //由于A类与B类中都有readBook()，只能导入其中一个，否则调用共同方法时代码报错
+                                //c.readBook()
+                                //C类可以执行B类中的writeBook()
+                                c.writeBook()
+                            }
+                        }
+                    隐式参数案例四（员工领取薪水）
+                        object Company{
+                            //在object中定义隐式值    注意：同一类型的隐式值只允许出现一次，否则会报错
+                            implicit  val aaa="zhangsan"
+                            implicit  val bbb=10000.00
+                        }
+                        class Boss {
+                            //注意参数匹配的类型   它需要的是String类型的隐式值
+                            def callName()(implicit name:String):String={
+                                name+" is coming !"
+                            }
+                            //定义一个用implicit修饰的参数
+                            //注意参数匹配的类型    它需要的是Double类型的隐式值
+                            def getMoney()(implicit money:Double):String={
+                                " 当月薪水："+money
+                            }
+                        }
+                        object Boss extends App{
+                            //使用import导入定义好的隐式值，注意：必须先加载否则会报错
+                            import Company._
+                            val boss =new Boss
+                            println(boss.callName()+boss.getMoney())
+                        }
+    RDD算子：
+        trasnformation:
+            1.单元素RDD：
+                parallelize()   
+                    sc.parallelize(List("shenzhen", "is a beautiful city"))    将一个存在的集合转换成RDD
+                textFile()  textFile支持分区，支持模式匹配
+                    sc.textFile("F:\\dataexample\\wordcount\\input") 
+                filter()    按照指定的条件进行过滤
+                    filter(line=>line.contains("zks"))
+                takeWhile(_>8)....
+                map()
+                flatMap()
+                distinct()
+                union()    RDD1.union(RDD2)    两个RDD进行合并   不去重
+                intersection()  RDD1.intersection(RDD2)   两个RDD的交集   去重
+                substract()    RDD1.substract(RDD2)    两个RDD的差集   不去重
+                substractByKey()    RDD1.substractByKey(RDD2)   根据key做差集
+
+            2.单元素与PairRDD互转
+                cartesion()    RDD1.cartesion(RDD2)   两个RDD做笛卡尔积
+                    sc.parallelize(List("1","2","3"))    sc.parallelize(List("a","b","c"))    Array((1,a), (1,b), (1,c), (2,a), (2,b), (2,c), (3,a), (3,b), (3,c))
+                map()   flatMap()
+                keys()   values()
+
+            3.PairRDD：关联--分组--聚合--排序
+                排序：
+                    sortByKey()   将键值对根据key进行排序
+                聚合：
+                    combineByKey()   根据姓名聚合求课程的平均值
+                        scoresWithKeyRDD.combineByKey(
+                        (x: ScoreDetail) => (x.score, 1) /*createCombiner*/,
+                        (acc: (Float, Int), x: ScoreDetail) => (acc._1 + x.score, acc._2 + 1) /*mergeValue*/,
+                        (acc1: (Float, Int), acc2: (Float, Int)) => (acc1._1 + acc2._1, acc1._2 + acc2._2) /*mergeCombiners*/
+                        // calculate the average
+                        ).map( { case(key, value) => (key, value._1/value._2) })
+                    reduceByKey()
+                        RDD {(1, 2), (3, 4), (3, 6)}   mapRDD.reduceByKey((x,y)=>x+y)     ((1,2)(3,10))
+                分组：
+                    groupBy()
+
+                    groupByKey()
+                        sc.parallelize(List(("xiaoming",75),("xiaoming",90),("lihua",95),("lihua",100),("xiaofeng",85)))
+                        Array((lihua,(95, 100))(xiaoming,(75, 90))(xiaofeng,(85)))
+                    coGroup()
+                        sc.parallelize(List(("xiaoming",95),("xiaoming",90),("lihua",95),("lihua",98),("xiaofeng",97)))
+                        sc.parallelize(List(("xiaoming",65),("lihua",63),("lihua",62),("xiaofeng",67)))
+                        sc.parallelize(List(("xiaoming",25),("xiaoming",15),("lihua",35),("lihua",28),("xiaofeng",36)))
+                        {(xiaoming,([95, 90],[65],[25, 15])), (lihua,([95, 98],[63, 62],[35, 28])), (xiaofeng,([97],[67],[36]))}
+                关联：rdd={(1,2),(3,4),(3,6)}   other={(3,9)}                   
+                    join()     {(3,(4,9)),(3,(6,9))}                       
+                    leftOuterJoin()  {(1,(2,none)),(3,(4,some(9))),(3,(6,some(9)))}
+                    rightOuterJoin()   {(3,(some(4),9)),(3,(some(6),9))}
+        action:  take top count collect 
+            1.单元素RDD：
+                take(n)      对每个分区取前n数据(可以是pairRDD)本身不带排序功能区别top   一般 先collect()  再take()               
+                first()
+                collect()    将各个分区数据进行收集汇集 返回数组array[T]
+                reduce()
+                count()
+                countByValue()    统计各元素出现的个数
+                    sc.parallelize(List(1,2,3,3))    Map(1 -> 1, 2 -> 1, 3 -> 2)
+                countByKey()     根据key来统计出现的个数
+                foreach()   
+            2.PairRDD：
+                takeOrdered(n) 与top仅仅在排序上不同  升序
+                top(n)   会对key进行一次降序排序  取前n数据   如果是单元素则降序排序后 取前n数据
+                collectAsMap()   将键值对RDD转换成MapRDD
+
+        other：
+            1.RDD存储：
+                saveAsTextFile("hdfs://cdh5/tmp/lxw1234.com/")
+                    注意：使用file:///tmp/lxw1234.com 会将文件保存在executor所在的机器本地目录
+                saveAsSequenceFile()
+            2.RDD分区：
+                重分区：
+                    对数据进行重新分区是一个相当昂贵的操作。
+                    还好，Spark还有一个名为coalesce（）的repartition（）的优化版本，它允许避免数据移动，但只有在减少RDD分区的数量的时候使用。
+                    def coalesce(numPartitions: Int, shuffle: Boolean = false)
+                    def repartition(numPartitions: Int)(implicit ord: Ordering[T] = null): RDD[T] = withScope {
+                        coalesce(numPartitions, shuffle = true)
+                    }
+                    ./bin/spark-submit \
+                        --class <main-class>
+                        --master <master-url> \
+                        --deploy-mode <deploy-mode> \
+                        --conf <key>=<value> \
+                        ... # other options
+                        <application-jar> \
+                        [application-arguments]
+                    在--conf后面添加：spark.default.parallelism=your_partition_number
+                    def randomSplit(weights: Array[Double], seed: Long = Utils.random.nextLong): Array[RDD[T]]
+                        该函数根据weights权重，将一个RDD。把原来的rdd按照权重，随机划分到这4个RDD中，权重高的RDD，划分到的几率就大一些。
+                        该权重参数为一个Double数组,注意，权重的总和加起来为1，否则会不正常;第二个参数为random的种子，基本可忽略。
+                        var rdd = sc.makeRDD(1 to 10,10)
+                        splitRDD = rdd.randomSplit(Array(1.0,2.0,3.0,4.0))
+                        splitRDD: Array[org.apache.spark.rdd.RDD[Int]] = Array(MapPartitionsRDD[17] at randomSplit at :23, 
+                        MapPartitionsRDD[18] at randomSplit at :23, 
+                        MapPartitionsRDD[19] at randomSplit at :23, 
+                        MapPartitionsRDD[20] at randomSplit at :23) //这里注意：randomSplit的结果是一个RDD数组
+                        splitRDD.size   4
+                    glom()  将每个分区中的元素放到一个数组中，返回RDD[Array[T]]
+                    var rdd = sc.makeRDD(1 to 10,3)
+                    rdd.partitions.size     3
+                    rdd.glom().collect   
+                    结果：Array(Array(1, 2, 3), Array(4, 5, 6), Array(7, 8, 9, 10)) 
+                mapPartitions()
+                    操作键值对 把(i,j) 变成(i,j*j) 
+                    var rdd = sc.parallelize(List((1,1), (1,2), (1,3), (2,1), (2,2), (2,3)))
+                    def mapPartFunc(iter: Iterator[(Int,Int)]):Iterator[(Int,Int)]={
+                        var res = List[(Int,Int)]()
+                        while (iter.hasNext){
+                            val cur = iter.next
+                            res=res.::(cur._1,cur._2*cur._2)
+                        }
+                        res.iterator
+                    }
+                    val mapPartionsRDD = rdd.mapPartitions(mapPartFunc)
+                    mapPartionsRDD.foreach(println(_))
+                mapPartitionWithIndex()
+                    按照分区进行的map操作，不过mapPartitionsWithIndex传入的参数多了一个分区的值
+                    统计各个分区中的元素
+                        val rdd = sc.parallelize(List(1,2,3,4,5,6,7,8,9,10),3)
+                        def mapPartIndexFunc(i1:Int,iter: Iterator[Int]):Iterator[(Int,Int)]={
+                            var res = List[(Int,Int)]()
+                            while(iter.hasNext){
+                                var next = iter.next()
+                                res=res.::(i1,next)
+                            }
+                            res.iterator
+                        }
+                        var mapPartIndexRDDs = rdd.mapPartitionsWithIndex(mapPartIndexFunc)
+                        mapPartIndexRDDs.foreach(println(_))
+                        ------------输出-------
+                        (0,3)
+                        (0,2)
+                        (0,1)
+                        (1,6)
+                        (1,5)
+                        (1,4)
+                        (2,10)
+                        (2,9)
+                        (2,8)
+                        (2,7)
+                        --------------------- 
+                HashPartitioner()    key.hashCode() % numPartitions
+                    def mapPartIndexFunc(i1:Int,iter: Iterator[(Int,Int)]):Iterator[(Int,(Int,Int))]={
+                    var res = List[(Int,(Int,Int))]()
+                    while(iter.hasNext){
+                        var next = iter.next()
+                        res=res.::(i1,next)
+                    }
+                        res.iterator
+                    }
+                    def printRDDPart(rdd:RDD[(Int,Int)]): Unit ={
+                        var mapPartIndexRDDs = rdd.mapPartitionsWithIndex(mapPartIndexFunc)
+                        mapPartIndexRDDs.foreach(println(_))
+                    }
+                    var pairRdd = sc.parallelize(List((1,1), (1,2), (2,3), (2,4), (3,5), (3,6),(4,7), (4,8),(5,9), (5,10)))
+                        //未分区的输出
+                        printRDDPart(pairRdd)
+                        println("=========================")
+                        val partitioned = pairRdd.partitionBy(new spark.HashPartitioner(3))
+                        //分区后的输出
+                        printRDDPart(partitioned)
+                    -----------输出------------
+                    (0,(5,10))
+                    (0,(5,9))
+                    (0,(4,8))
+                    (0,(4,7))
+                    (0,(3,6))
+                    (0,(3,5))
+                    (0,(2,4))
+                    (0,(2,3))
+                    (0,(1,2))
+                    (0,(1,1))
+                    =========================
+                    (0,(3,6))
+                    (0,(3,5))
+                    (1,(4,8))
+                    (1,(4,7))
+                    (1,(1,2))
+                    (1,(1,1))
+                    (2,(5,10))
+                    (2,(5,9))
+                    (2,(2,4))
+                    (2,(2,3))
+                RangePartitioner      根据key的大小进行划分
+                    var pairRdd = sc.parallelize(List((1,1), (5,10), (5,9), (2,4), (3,5), (3,6),(4,7), (4,8),(2,3), (1,2)))
+                        printRDDPart(pairRdd)
+                        println("=========================")
+                        val partitioned = pairRdd.partitionBy(new RangePartitioner(3,pairRdd))
+                        printRDDPart(partitioned)
+                    }
+                    -------------------输出------------------
+                    (0,(1,2))
+                    (0,(2,3))
+                    (0,(4,8))
+                    (0,(4,7))
+                    (0,(3,6))
+                    (0,(3,5))
+                    (0,(2,4))
+                    (0,(5,9))
+                    (0,(5,10))
+                    (0,(1,1))
+                    =========================
+                    (0,(1,2))
+                    (0,(2,3))
+                    (0,(2,4))
+                    (0,(1,1))
+                    (1,(4,8))
+                    (1,(4,7))
+                    (1,(3,6))
+                    (1,(3,5))
+                    (2,(5,9))
+                    (2,(5,10))
+                自定义分区
+                    class CustomPartitioner(numParts: Int) extends Partitioner{
+                        override def numPartitions: Int = numParts
+                        override def getPartition(key: Any): Int = {
+                            if(key.toString.toInt>=4){
+                                0
+                            }else if(key.toString.toInt>=2&&key.toString.toInt<4){
+                                1
+                            }else{
+                                2
+                            }
+                        }
+                    }
+                    var pairRdd = sc.parallelize(List((1,1), (5,10), (5,9), (2,4), (3,5), (3,6),(4,7), (4,8),(2,3), (1,2)))
+                    val partitionedRdd = pairRdd.partitionBy(new CustomPartitioner(3))
+                    printRDDPart(partitionedRdd)
+                    ----------输出-----------------
+                    (0,(4,8))
+                    (0,(4,7))
+                    (0,(5,9))
+                    (0,(5,10))
+                    (1,(2,3))
+                    (1,(3,6))
+                    (1,(3,5))
+                    (1,(2,4))
+                    (2,(1,2))
+                    (2,(1,1))
+        _总结:
+            _表示遍历的元素时不能调用方法了。如果调用只能显式调用  x=>x.toBuffer()
+            参数序列：parameters Sequence
+                Range转换为List List(1 to 5:_*)
+            通配符/占位符：
+                val (a, _) = (1, 2)     for (_ <- 1 to 10)   只是占位的作用  上下文不使用
+            初始化变量：
+                var name:String=_   //在这里，name也可以声明为null，例：var name:String=null。这里的下划线和null的作用是一样的。
+                var age:Int=_       //在这里，age也可以声明为0，例：var age:Int=0。这里的下划线和0的作用是一样的。
+            模式匹配：  相当于others
+                val result=  value match{
+                    case "a" => 1
+                    case _ =>"result"
+                }
+            Scala特有的“偏函数”用法：
+                def setFunction(parm1:Double,parm2:Double): Double = parm1+parm2
+                val set=setFunction(3.0,_:Double)
+                println(set(7.1))
+            简写函数字面量（function literal）：
+                如果函数的参数在函数体内只出现一次，则可以使用下划线代替
+                val f1 = (_: Int) + (_: Int)    //等价于        val f2 = (x: Int, y: Int) => x + y
+                list.foreach(println(_))        //等价于        list.foreach(e => println(e))
+        option：
+            option的创建：
+                val greeting: Option[String] = Some("Hello world")
+                val greeting: Option[String] = None
+                val absentGreeting: Option[String] = Option(null)// absentGreeting will be None
+                val presentGreeting: Option[String] = Option("Hello!") // presentGreeting will be Some("Hello!")
+                def get(key: A): Option[B] = {
+                    val e = findEntry(key)
+                    if (e eq null) None
+                    else Some(e.value)
+                }
+            使用案例：
+                case class User(
+                    id: Int,
+                    firstName: String,
+                    lastName: String,
+                    age: Int,
+                    gender: Option[String]
+                  )
+                  object UserRepository {
+                    private val users = Map(1 -> User(1, "John", "Doe", 32, Some("male")),
+                                            2 -> User(2, "Johanna", "Doe", 30, None))
+                    def findById(id: Int): Option[User] = users.get(id)
+                    def findAll = users.values
+                  }
+                1.val user = User(2, "Johanna", "Doe", 30, None)
+                   println("Gender: " + user.gender.getOrElse("not specified")) // will print "not specified"
+                2.val user = User(2, "Johanna", "Doe", 30, None)
+                  user.gender match {
+                    case Some(gender) => println("Gender: " + gender)
+                    case None => println("Gender: not specified")
+                  }    //此方式不优雅  一般不建议使用。
+                3.Option[A] 是类型 A 的容器，更确切地说，你可以把它看作是某种集合， 这个特殊的集合要么只包含一个元素，要么就什么元素都没有。
+                    Option 表现的像集合，最棒的一点是， 你可以用它来进行函数式编程，就像处理列表、集合那样。你也可以映射 Option[A] 到 Option[B]： 如果 Option[A] 实例是 Some[A] 类型，那映射结果就是 Some[B] 类型；否则，就是 None 。
+                    UserRepository.findById(2).foreach(user => println(user.firstName)) // prints "Johanna"
+                    如果这个 Option 是一个 Some ，传递给 foreach 的函数就会被调用一次，且只有一次； 如果是 None ，那它就不会被调用。
+                    map:
+                    val age = UserRepository.findById(1).map(_.age) // age is Some(32)
+                    val gender = UserRepository.findById(1).map(_.gender) // gender is an Option[Option[String]]
+                    flatmap:
+                    val gender1 = UserRepository.findById(1).flatMap(_.gender) // gender is Some("male")
+                    val gender2 = UserRepository.findById(2).flatMap(_.gender) // gender is None
+                    filter:
+                    UserRepository.findById(1).filter(_.age > 30) // None, because age is <= 30
+                    UserRepository.findById(2).filter(_.age > 30) // Some(user), because age is > 30
+                    UserRepository.findById(3).filter(_.age > 30) // None, because user is already None
+                    for:
+                    for {
+                        user <- UserRepository.findAll
+                        gender <- user.gender
+                    } yield gender  // result in List("male")
+                    for {
+                        User(_, _, _, _, Some(gender)) <- UserRepository.findAll
+                    } yield gender
+                Option 常用方法:
+                    序号	方法及描述
+                    1	def get: A  获取可选值
+                    2	def isEmpty: Boolean    检测可选类型值是否为 None，是的话返回 true，否则返回 false
+                    3	def productArity: Int   返回元素个数， A(x_1, ..., x_k), 返回 k
+                    4	def productElement(n: Int): Any 获取指定的可选项，以 0 为起始。即 A(x_1, ..., x_k), 返回 x_(n+1) ， 0 < n < k.
+                    5	def exists(p: (A) => Boolean): Boolean  如果可选项中指定条件的元素存在且不为 None 返回 true，否则返回 false。
+                    6	def filter(p: (A) => Boolean): Option[A]    如果选项包含有值，而且传递给 filter 的条件函数返回 true， filter 会返回 Some 实例。 否则，返回值为 None 。
+                    7	def filterNot(p: (A) => Boolean): Option[A] 如果选项包含有值，而且传递给 filter 的条件函数返回 false， filter 会返回 Some 实例。 否则，返回值为 None 。
+                    8	def flatMap[B](f: (A) => Option[B]): Option[B]  如果选项包含有值，则传递给函数 f 处理后返回，否则返回 None
+                    9	def foreach[U](f: (A) => U): Unit   如果选项包含有值，则将每个值传递给函数 f， 否则不处理。
+                    10	def getOrElse[B >: A](default: => B): B 如果选项包含有值，返回选项值，否则返回设定的默认值。
+                    11	def isDefined: Boolean  如果可选值是 Some 的实例返回 true，否则返回 false。
+                    12	def iterator: Iterator[A]   如果选项包含有值，迭代出可选值。如果可选值为空则返回空迭代器。
+                    13	def map[B](f: (A) => B): Option[B]  如果选项包含有值， 返回由函数 f 处理后的 Some，否则返回 None
+                    14	def orElse[B >: A](alternative: => Option[B]): Option[B]    如果一个 Option 是 None ， orElse 方法会返回传名参数的值，否则，就直接返回这个 Option。
+                    15	def orNull  如果选项包含有值返回选项值，否则返回 null。
+                正则表达式：
+                    ^  	匹配输入字符串开始的位置。
+                    $	匹配输入字符串结尾的位置。
+                    .	匹配除"\r\n"之外的任何单个字符。
+                    [...]	字符集。匹配包含的任一字符。例如，"[abc]"匹配"plain"中的"a"。
+                    [^...]	反向字符集。匹配未包含的任何字符。例如，"[^abc]"匹配"plain"中"p"，"l"，"i"，"n"。
+                    re*	重复零次或更多次
+                    re+	重复一次或更多次
+                    re?	重复零次或一次
+                    re{ n}	重复n次
+                    re{ n,}
+                    re{ n, m}	重复n到m次
+                    a|b	匹配 a 或者 b
+                    (re)	匹配 re,并捕获文本到自动命名的组里
+                    (?: re)	匹配 re,不捕获匹配的文本，也不给此分组分配组号
+                    (?> re)	贪婪子表达式
+                    \\w	匹配字母或数字或下划线或汉字
+                    \\W	匹配任意不是字母，数字，下划线，汉字的字符
+                    \\s	匹配任意的空白符,相等于 [\t\n\r\f]
+                    \\S	匹配任意不是空白符的字符
+                    \\d	匹配数字，类似 [0-9]
+                    \\D	匹配任意非数字的字符
+                    \\n	换行符
+                    \\b	通常是单词分界位置，但如果在字符类里使用代表退格
+                    \\B	匹配不是单词开头或结束的位置
+                    \\t	制表符
+                    Java分组和替换：
+                        替换：
+                        String str = "wo1shi2zhong3guo4ren";
+                        //需要替换得到 wo shi zhong guo ren
+                        //写一个正则，用空字符替换原字符串的任意数字
+                        String regex = "\\d"; // \d表示任意数字                       
+                        String target = str.replaceAll(regex, " ");
+                        System.out.println(target);
+                        分组：根据多少个左括号来确定有多少个组。
+                            表达式 ((A)(B(C))) 中，存在四个这样的组：
+                            1    ((A)(B(C)))
+                            2    (A)
+                            3    (B(C))
+                            4    (C)
+                            // 1叠词：快快乐乐，高高高兴兴
+                            // 判断字符串是否是上面的叠词规则
+                            String regex = "(.)\\1(.)\\2";  // 这个正则表达式表示 快快乐乐这样的叠词
+                            // 上面(.)表示一个分组，里面.表示任意字符，\\1表示组1又出现了一次，\\2表示组2又出现了一次
+                            System.out.println("快快乐乐".matches(regex));
+                            System.out.println("快乐快乐".matches(regex));
+                            System.out.println("高高兴兴".matches(regex));
+                            System.out.println("快乐乐乐".matches(regex));
+
+        hive on spark：
+            强调的是hive的计算引擎是spark而不是MapReduce，其sql引擎还是hive  spark计算引擎是MapReduce的10-100倍。
+        sparksql：两大组件：sqlcontext和dataframe
+            sparksql项目起源于shark,shark是一个sql查询工具，为了提高SQL-on-Hadoop的效率，Shark应运而生，其底层过多的依赖于hive而被放弃(hive的语法解析器，查询优化器)，于是就出现了sparksql.
+            强调的是sql引擎是sparksql,计算引擎是spark
+            结构上Hive On Spark和SparkSQL都是一个翻译层，把一个SQL翻译成分布式可执行的Spark程序。而且大家的引擎都是spark
+
+
+
+
+
+                    
+
+
+
+            
+
+
+
+            
+                
+
+            
+            
+
+                
+            
+            
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+                    
+
+
+
+                
+
+
+
+
+
+
+
+
+                    
+
+
+
+
+            
+
+
+
+ 
+
+
+            
+            
+
+
+
+
+
+
+
+
+            
+                    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+
+
+
+
+

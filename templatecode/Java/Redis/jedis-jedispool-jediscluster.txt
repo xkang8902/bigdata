@@ -1,0 +1,59 @@
+jedis、jedisPool、jedisCluster的使用方法
+
+jedis 连接redis（单机）：
+    使用jedis如何操作redis，但是其实方法是跟redis的操作大部分是相对应的。
+    所有的redis命令都对应jedis的一个方法 
+        1、在macen工程中引入jedis的jar包     
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
+        2、建立测试工程
+    public class JedisTest {
+        @Test
+        public void testJedis()throws Exception{
+            Jedis jedis = new Jedis("192.168.241.133",6379);
+            jedis.set("test", "my forst jedis");
+            String str = jedis.get("test");
+            System.out.println(str);
+            jedis.close();
+        }
+    }
+jedisPool连接redis （单机）        
+    public void testJedisPool()throws Exception{
+        //创建连接池对象
+        JedisPool jedispool = new JedisPool("192.168.241.133",6379);
+        //从连接池中获取一个连接
+        Jedis  jedis = jedispool.getResource(); 
+        //使用jedis操作redis
+        jedis.set("test", "my forst jedis");
+        String str = jedis.get("test");
+        System.out.println(str);
+        //使用完毕 ，关闭连接，连接池回收资源
+        jedis.close();
+        //关闭连接池
+        jedispool.close();
+    }
+
+jedisCluster连接redis（集群）
+
+    jedisCluster专门用来连接redis集群 
+    jedisCluster在单例存在的
+
+    public void testJedisCluster()throws Exception{
+        //创建jedisCluster对象，有一个参数 nodes是Set类型，Set包含若干个HostAndPort对象
+        Set<HostAndPort> nodes = new HashSet<>();
+        nodes.add(new HostAndPort("192.168.241.133",7001));
+        nodes.add(new HostAndPort("192.168.241.133",7002));
+        nodes.add(new HostAndPort("192.168.241.133",7003));
+        nodes.add(new HostAndPort("192.168.241.133",7004));
+        nodes.add(new HostAndPort("192.168.241.133",7005));
+        nodes.add(new HostAndPort("192.168.241.133",7006));
+        JedisCluster jedisCluster = new JedisCluster(nodes);
+        //使用jedisCluster操作redis
+        jedisCluster.set("test", "my forst jedis");
+        String str = jedisCluster.get("test");
+        System.out.println(str);
+        //关闭连接池
+        jedisCluster.close();
+    }

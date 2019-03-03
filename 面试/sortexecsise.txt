@@ -1,0 +1,56 @@
+二分查找：
+public Int binarySearch(Int[] arr, Int value){
+    Int start = 0
+    Int end = arr.length;
+
+    while(start < end){
+
+        Int mid = (start + end)/2;
+
+        if(arr[mid] = value){
+            return mid;
+        }
+        if(arr[mid] < value){
+            start = mid + 1;
+            mid = (start + end)/2
+        }
+        if(arr[mid] > value){
+            end = mid - 1;
+            mid = (start + end)/2;
+        }
+    }
+
+    return -1;
+}
+
+冒泡排序:
+public void bubbleSort(Int[] arr){
+    int tmp = 0;
+    for(Int i = 0; i < arr.length; i++){
+        for(Int j = 0; j < arr.length - i; j++){
+            if(arr[j-1] > arr[j]){
+                tmp = arr[j];
+                arr[j] = arr[j-1];
+                arr[j-1] = tmp;
+            }
+        }
+    }
+}
+
+快排:
+
+public void quickSort(Int[] arr, Int start, Int end){
+
+    if(start < end){
+
+        Int index = getIndexAndSort(arr, start, end)
+
+        quickSort(arr, start, index)
+        quickSort(arr, index, end)
+
+    }
+}
+private Int getIndexAndSort(Int[], Int start, Int end){
+
+
+}
